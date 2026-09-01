@@ -1,0 +1,10 @@
+{
+  "description": "Discover stylish and affordable Indian fashion with a user-friendly e-commerce platform that prioritizes quality, comfort, and a seamless shopping experience.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
