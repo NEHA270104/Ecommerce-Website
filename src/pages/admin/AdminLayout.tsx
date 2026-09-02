@@ -14,6 +14,7 @@ import {
   faRightFromBracket,
 } from "@fortawesome/free-solid-svg-icons";
 import logoImg from "../../imports/WhatsApp_Image_2026-08-20_at_10.12.44_AM.jpeg";
+import { apiFetch } from "../../lib/api.ts";
 
 const navItems = [
   { to: "/admin", label: "Dashboard", exact: true, icon: faGauge },
@@ -35,9 +36,8 @@ export default function AdminLayout() {
   const handleLogout = async () => {
     setLoggingOut(true);
     try {
-      await fetch("/api/auth/logout", {
+      await apiFetch("/api/auth/logout", {
         method: "POST",
-        credentials: "include",
       });
     } catch {
       // Continue navigation even if network fails

@@ -67,10 +67,68 @@ function parseJsonBody<T = Record<string, unknown>>(req: IncomingMessage): Promi
   });
 }
 
-function sendJson(res: ServerResponse, statusCode: number, data: unknown, headers: Record<string, string> = {}) {
+function isOriginAllowed(origin: string | undefined): boolean {
+  if (!origin) return false;
+
+  const frontendEnv = process.env.FRONTEND_URL?.trim();
+  if (!frontendEnv || frontendEnv === "*") return true;
+
+  const allowedList = frontendEnv
+    .split(",")
+    .map((url) => url.trim().replace(/\/+$/, "").toLowerCase())
+    .filter(Boolean);
+
+  const cleanOrigin = origin.trim().replace(/\/+$/, "").toLowerCase();
+
+  // Exact match with any allowed URL
+  if (allowedList.includes(cleanOrigin)) return true;
+
+  // Allow localhost during dev
+  if (cleanOrigin.startsWith("http://localhost:") || cleanOrigin.startsWith("http://127.0.0.1:")) {
+    return true;
+  }
+
+  // Allow Cloudflare Pages subdomains if user configured base domain or *.pages.dev
+  if (cleanOrigin.endsWith(".pages.dev")) {
+    return true;
+  }
+
+  return false;
+}
+
+function getCorsHeaders(req: IncomingMessage): Record<string, string> {
+  const origin = req.headers.origin;
+  const headers: Record<string, string> = {
+    "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, Cookie, X-Requested-With",
+    "Access-Control-Max-Age": "86400",
+    "Vary": "Origin",
+  };
+
+  // Only reflect specific allowed origin with credentials (never wildcard with credentials)
+  if (origin && isOriginAllowed(origin)) {
+    headers["Access-Control-Allow-Origin"] = origin;
+    headers["Access-Control-Allow-Credentials"] = "true";
+  }
+
+  return headers;
+}
+
+function sendJson(
+  req: IncomingMessage,
+  res: ServerResponse,
+  statusCode: number,
+  data: unknown,
+  extraHeaders: Record<string, string> = {}
+) {
+  const corsHeaders = getCorsHeaders(req);
   res.statusCode = statusCode;
   res.setHeader("Content-Type", "application/json");
-  for (const [key, value] of Object.entries(headers)) {
+
+  for (const [key, value] of Object.entries(corsHeaders)) {
+    res.setHeader(key, value);
+  }
+  for (const [key, value] of Object.entries(extraHeaders)) {
     res.setHeader(key, value);
   }
   res.end(JSON.stringify(data));
@@ -83,21 +141,39 @@ interface DecodedUser {
 }
 
 function getSessionUser(req: IncomingMessage): DecodedUser | null {
+  // 1. Primary: Check HttpOnly cookie
   const cookieHeader = req.headers.cookie;
-  if (!cookieHeader) return null;
-
-  const cookies = parseCookies(cookieHeader);
-  const token = cookies[AUTH_COOKIE_NAME];
-  if (!token) return null;
-
-  try {
-    const decoded = jwt.verify(token, getAuthSecret()) as DecodedUser;
-    if (decoded && decoded.email && decoded.role) {
-      return decoded;
+  if (cookieHeader) {
+    const cookies = parseCookies(cookieHeader);
+    const token = cookies[AUTH_COOKIE_NAME];
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, getAuthSecret()) as DecodedUser;
+        if (decoded && decoded.email && decoded.role) {
+          return decoded;
+        }
+      } catch {
+        // Invalid or expired cookie token
+      }
     }
-  } catch {
-    return null;
   }
+
+  // 2. Secondary fallback: Check Authorization Bearer header (for direct API/CLI/scripts testing)
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    const bearerToken = authHeader.substring(7).trim();
+    if (bearerToken) {
+      try {
+        const decoded = jwt.verify(bearerToken, getAuthSecret()) as DecodedUser;
+        if (decoded && decoded.email && decoded.role) {
+          return decoded;
+        }
+      } catch {
+        return null;
+      }
+    }
+  }
+
   return null;
 }
 
@@ -110,13 +186,45 @@ export async function handleApiRequest(
   const pathname = url.split("?")[0];
   const method = req.method || "GET";
 
+  // Handle CORS preflight (OPTIONS)
+  if (method === "OPTIONS" && pathname.startsWith("/api/")) {
+    const corsHeaders = getCorsHeaders(req);
+    res.statusCode = 204;
+    for (const [key, value] of Object.entries(corsHeaders)) {
+      res.setHeader(key, value);
+    }
+    res.end();
+    return;
+  }
+
   // Only handle /api/ routes
   if (!pathname.startsWith("/api/")) {
     return next();
   }
 
   try {
-    // ── 1. POST /api/auth/login ──────────────────────────────────────────
+    // ── 0. GET /api/health (General Backend Health) ──────────────────────
+    if (pathname === "/api/health" && method === "GET") {
+      return sendJson(req, res, 200, {
+        status: "ok",
+        timestamp: new Date().toISOString(),
+        service: "vrishabhanvi-backend",
+      });
+    }
+
+    // ── 1. GET /api/health/mongodb (Database Health) ──────────────────────
+    if (pathname === "/api/health/mongodb" && method === "GET") {
+      const result = await checkMongoConnection();
+      if (result.ok) {
+        return sendJson(req, res, 200, { connected: true });
+      }
+      return sendJson(req, res, 503, {
+        connected: false,
+        error: "MongoDB connection failed",
+      });
+    }
+
+    // ── 2. POST /api/auth/login ──────────────────────────────────────────
     if (pathname === "/api/auth/login" && method === "POST") {
       const body = await parseJsonBody<{ email?: string; password?: string }>(req);
       const email = body.email?.trim() || "";
@@ -124,12 +232,12 @@ export async function handleApiRequest(
 
       // Validation
       if (!email || !password) {
-        return sendJson(res, 400, { error: "Email and password are required" });
+        return sendJson(req, res, 400, { error: "Email and password are required" });
       }
 
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
-        return sendJson(res, 400, { error: "Please enter a valid email address" });
+        return sendJson(req, res, 400, { error: "Please enter a valid email address" });
       }
 
       let isAuthenticated = false;
@@ -158,7 +266,7 @@ export async function handleApiRequest(
         console.warn("[Auth API] MongoDB query error or not yet connected:", dbErr instanceof Error ? dbErr.message : dbErr);
       }
 
-      // 2. If not authenticated via MongoDB, check server-side environment variables fallback
+      // 2. Fallback to server-side environment variables
       if (!isAuthenticated) {
         const envEmail = process.env.ADMIN_EMAIL?.trim();
         const envPassword = process.env.ADMIN_PASSWORD;
@@ -177,7 +285,7 @@ export async function handleApiRequest(
       }
 
       if (!isAuthenticated) {
-        return sendJson(res, 401, { error: "Invalid email or password" });
+        return sendJson(req, res, 401, { error: "Invalid email or password" });
       }
 
       // Generate JWT Token
@@ -191,17 +299,19 @@ export async function handleApiRequest(
         expiresIn: "7d",
       });
 
-      // Set HTTP-only Cookie
-      const isProduction = process.env.NODE_ENV === "production";
+      // Set HTTP-only Cookie (SameSite=None; Secure in production, SameSite=Lax in local dev)
+      const isProduction = process.env.NODE_ENV === "production" || !!process.env.RENDER;
       const setCookie = serializeCookie(AUTH_COOKIE_NAME, token, {
         httpOnly: true,
         secure: isProduction,
-        sameSite: "lax",
+        sameSite: isProduction ? "none" : "lax",
         path: "/",
         maxAge: 7 * 24 * 60 * 60, // 7 days
       });
 
+      // Send response without exposing the raw JWT token in the JSON body
       return sendJson(
+        req,
         res,
         200,
         {
@@ -216,18 +326,19 @@ export async function handleApiRequest(
       );
     }
 
-    // ── 2. POST /api/auth/logout ─────────────────────────────────────────
+    // ── 3. POST /api/auth/logout ─────────────────────────────────────────
     if (pathname === "/api/auth/logout" && method === "POST") {
-      const isProduction = process.env.NODE_ENV === "production";
+      const isProduction = process.env.NODE_ENV === "production" || !!process.env.RENDER;
       const clearCookie = serializeCookie(AUTH_COOKIE_NAME, "", {
         httpOnly: true,
         secure: isProduction,
-        sameSite: "lax",
+        sameSite: isProduction ? "none" : "lax",
         path: "/",
         maxAge: 0,
       });
 
       return sendJson(
+        req,
         res,
         200,
         { success: true, message: "Logged out successfully" },
@@ -235,14 +346,14 @@ export async function handleApiRequest(
       );
     }
 
-    // ── 3. GET /api/auth/me ──────────────────────────────────────────────
+    // ── 4. GET /api/auth/me ──────────────────────────────────────────────
     if (pathname === "/api/auth/me" && method === "GET") {
       const user = getSessionUser(req);
       if (!user) {
-        return sendJson(res, 401, { authenticated: false, error: "Unauthorized" });
+        return sendJson(req, res, 401, { authenticated: false, error: "Unauthorized" });
       }
 
-      return sendJson(res, 200, {
+      return sendJson(req, res, 200, {
         authenticated: true,
         user: {
           email: user.email,
@@ -251,35 +362,21 @@ export async function handleApiRequest(
       });
     }
 
-    // ── 4. GET /api/health/mongodb ────────────────────────────────────────
-    // Public (no auth required) — reports only connected:true/false.
-    // Never returns the connection string, credentials, or raw error text.
-    if (pathname === "/api/health/mongodb" && method === "GET") {
-      const result = await checkMongoConnection();
-      if (result.ok) {
-        return sendJson(res, 200, { connected: true });
-      }
-      return sendJson(res, 503, {
-        connected: false,
-        error: "MongoDB connection failed",
-      });
-    }
-
     // ── 5. Protected /api/admin/* endpoints ──────────────────────────────
     if (pathname.startsWith("/api/admin")) {
       const user = getSessionUser(req);
       if (!user) {
-        return sendJson(res, 401, { error: "Unauthorized. Admin session required." });
+        return sendJson(req, res, 401, { error: "Unauthorized. Admin session required." });
       }
 
       if (user.role !== "admin") {
-        return sendJson(res, 403, { error: "Forbidden. Admin privileges required." });
+        return sendJson(req, res, 403, { error: "Forbidden. Admin privileges required." });
       }
 
       // MongoDB health check for admin
       if (pathname === "/api/admin/health" && method === "GET") {
         const health = await checkMongoConnection();
-        return sendJson(res, health.ok ? 200 : 503, health);
+        return sendJson(req, res, health.ok ? 200 : 503, health);
       }
 
       // Products endpoints
@@ -290,7 +387,7 @@ export async function handleApiRequest(
 
           if (method === "GET") {
             const products = await productsCol.find({}).toArray();
-            return sendJson(res, 200, { products });
+            return sendJson(req, res, 200, { products });
           }
 
           if (method === "POST") {
@@ -300,10 +397,10 @@ export async function handleApiRequest(
               createdAt: new Date(),
               updatedAt: new Date(),
             });
-            return sendJson(res, 201, { success: true, id: result.insertedId });
+            return sendJson(req, res, 201, { success: true, id: result.insertedId });
           }
         } catch {
-          return sendJson(res, 200, { products: [], note: "MongoDB not connected" });
+          return sendJson(req, res, 200, { products: [], note: "MongoDB not connected" });
         }
       }
 
@@ -315,7 +412,7 @@ export async function handleApiRequest(
 
           if (method === "GET") {
             const categories = await categoriesCol.find({}).toArray();
-            return sendJson(res, 200, { categories });
+            return sendJson(req, res, 200, { categories });
           }
 
           if (method === "POST") {
@@ -324,10 +421,10 @@ export async function handleApiRequest(
               ...body,
               createdAt: new Date(),
             });
-            return sendJson(res, 201, { success: true, id: result.insertedId });
+            return sendJson(req, res, 201, { success: true, id: result.insertedId });
           }
         } catch {
-          return sendJson(res, 200, { categories: [], note: "MongoDB not connected" });
+          return sendJson(req, res, 200, { categories: [], note: "MongoDB not connected" });
         }
       }
 
@@ -339,10 +436,10 @@ export async function handleApiRequest(
 
           if (method === "GET") {
             const orders = await ordersCol.find({}).sort({ date: -1 }).toArray();
-            return sendJson(res, 200, { orders });
+            return sendJson(req, res, 200, { orders });
           }
         } catch {
-          return sendJson(res, 200, { orders: [], note: "MongoDB not connected" });
+          return sendJson(req, res, 200, { orders: [], note: "MongoDB not connected" });
         }
       }
 
@@ -354,22 +451,22 @@ export async function handleApiRequest(
 
           if (method === "GET") {
             const customers = await customersCol.find({}).toArray();
-            return sendJson(res, 200, { customers });
+            return sendJson(req, res, 200, { customers });
           }
         } catch {
-          return sendJson(res, 200, { customers: [], note: "MongoDB not connected" });
+          return sendJson(req, res, 200, { customers: [], note: "MongoDB not connected" });
         }
       }
 
       // Catch-all for unhandled /api/admin routes
-      return sendJson(res, 404, { error: "Admin endpoint not found" });
+      return sendJson(req, res, 404, { error: "Admin endpoint not found" });
     }
 
     // Catch-all for any other /api/* routes
-    return sendJson(res, 404, { error: "API endpoint not found" });
+    return sendJson(req, res, 404, { error: "API endpoint not found" });
   } catch (error) {
     console.error("[API Middleware Error]:", error);
-    return sendJson(res, 500, {
+    return sendJson(req, res, 500, {
       error: "An unexpected server error occurred.",
     });
   }

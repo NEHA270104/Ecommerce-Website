@@ -12,6 +12,7 @@ import {
   faCircleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
 import Logo from "../../components/Logo";
+import { apiFetch } from "../../lib/api.ts";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -66,12 +67,8 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await apiFetch("/api/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
         body: JSON.stringify({
           email: email.trim(),
           password,
@@ -81,7 +78,7 @@ export default function AdminLoginPage() {
       const data = await res.json().catch(() => ({}));
 
       if (res.ok && data.success) {
-        // Successful login: redirect to /admin
+        // Successful login: redirect to /admin (cookie is set by the server)
         navigate("/admin", { replace: true });
       } else {
         // Authentication failed: do not reveal which field was wrong

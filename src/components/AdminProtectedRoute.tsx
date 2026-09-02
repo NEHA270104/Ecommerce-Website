@@ -3,6 +3,7 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import Logo from "./Logo";
+import { apiFetch } from "../lib/api.ts";
 
 export default function AdminProtectedRoute({ children }: { children?: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
@@ -14,9 +15,8 @@ export default function AdminProtectedRoute({ children }: { children?: React.Rea
 
     async function verifyAuth() {
       try {
-        const res = await fetch("/api/auth/me", {
+        const res = await apiFetch("/api/auth/me", {
           method: "GET",
-          credentials: "include",
           headers: {
             "Cache-Control": "no-cache",
           },

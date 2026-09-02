@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-console.log('=== Production Verification Check ===');
+console.log('=== Production Verification Check (Cloudflare Pages + Render) ===');
 
 // 1. Check title in dist/index.html
 const html = fs.readFileSync(path.join(__dirname, '../dist/index.html'), 'utf8');
@@ -38,12 +38,12 @@ const rules = ['.env', '.env.local', '.env.*.local'];
 const allPresent = rules.every(r => gitignore.includes(r));
 console.log('3. .gitignore contains .env, .env.local, .env.*.local:', allPresent ? 'PASSED' : 'FAILED');
 
-// 4. Check Netlify function exists
-const functionExists = fs.existsSync(path.join(__dirname, '../netlify/functions/api.ts'));
-console.log('4. Netlify serverless function exists (netlify/functions/api.ts):', functionExists ? 'PASSED' : 'FAILED');
+// 4. Check Render standalone backend build exists
+const serverBuildExists = fs.existsSync(path.join(__dirname, '../dist-server/server.js'));
+console.log('4. Standalone Render backend build exists (dist-server/server.js):', serverBuildExists ? 'PASSED' : 'FAILED');
 
-// 5. Check netlify.toml exists
-const tomlExists = fs.existsSync(path.join(__dirname, '../netlify.toml'));
-console.log('5. netlify.toml configuration exists:', tomlExists ? 'PASSED' : 'FAILED');
+// 5. Check frontend API helper exists
+const apiHelperExists = fs.existsSync(path.join(__dirname, '../src/lib/api.ts'));
+console.log('5. Frontend API helper exists (src/lib/api.ts):', apiHelperExists ? 'PASSED' : 'FAILED');
 
-console.log('====================================');
+console.log('================================================================');
