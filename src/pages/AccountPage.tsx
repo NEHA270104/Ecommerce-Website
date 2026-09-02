@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useWishlist } from "../context/WishlistContext";
 import type { Order, Address } from "../context/AuthContext";
 
 function formatINR(n: number) { return `₹${n.toLocaleString("en-IN")}`; }
 
-type Tab = "dashboard" | "orders" | "order-detail" | "addresses";
+type Tab = "dashboard" | "orders" | "order-detail" | "addresses" | "wishlist";
 
 const statusColors: Record<Order["status"], { bg: string; text: string }> = {
   Placed: { bg: "#EFF6FF", text: "#1D4ED8" },
@@ -17,6 +18,7 @@ const statusColors: Record<Order["status"], { bg: string; text: string }> = {
 
 export default function AccountPage() {
   const { user, orders, addresses, isAuthenticated, signOut, addAddress, updateAddress, deleteAddress, setDefaultAddress } = useAuth();
+  const { items: wishlistItems, removeFromWishlist } = useWishlist();
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("dashboard");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -47,6 +49,11 @@ export default function AccountPage() {
       id: "orders",
       label: "Orders",
       icon: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="3" width="12" height="13" rx="1" /><path d="M5 7h6M5 10h6M5 13h3" /></svg>,
+    },
+    {
+      id: "wishlist",
+      label: "Wishlist",
+      icon: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M8 14s-5-3.5-5-7a3 3 0 015-2.2A3 3 0 0113 7c0 3.5-5 7-5 7z" /></svg>,
     },
     {
       id: "addresses",
@@ -162,6 +169,43 @@ export default function AccountPage() {
                   ← Back to Orders
                 </button>
                 <OrderDetailView order={selectedOrder} />
+              </div>
+            )}
+
+            {/* Wishlist */}
+            {tab === "wishlist" && (
+              <div>
+                <h1 style={{ fontFamily: "'Playfair Display', serif", color: "#0B1736", fontSize: "1.5rem" }} className="font-semibold mb-5">My Wishlist</h1>
+                {wishlistItems.length === 0 ? (
+                  <div style={{ backgroundColor: "#fff", border: "1px solid #E5E7EB", borderRadius: "16px" }} className="p-12 text-center">
+                    <p style={{ fontFamily: "'Playfair Display', serif", color: "#6B7280", fontSize: "1.1rem" }}>Your wishlist is empty.</p>
+                    <Link to="/shop" style={{ color: "#C99724", fontFamily: "'Manrope', sans-serif" }} className="mt-2 text-sm inline-block">Explore Products →</Link>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {wishlistItems.map((p) => (
+                      <div key={p.id} style={{ backgroundColor: "#fff", border: "1px solid #E5E7EB", borderRadius: "12px" }} className="p-4 flex gap-4 items-center">
+                        <img src={p.images[0]} alt={p.name} style={{ width: "70px", height: "85px", objectFit: "cover", borderRadius: "8px" }} />
+                        <div className="flex-1 min-w-0">
+                          <Link to={`/product/${p.slug}`} style={{ fontFamily: "'Playfair Display', serif", color: "#0B1736", fontWeight: 600, fontSize: "0.95rem" }} className="line-clamp-1 hover:text-[#C99724]">
+                            {p.name}
+                          </Link>
+                          <p style={{ fontFamily: "'Manrope', sans-serif", color: "#0B1736", fontWeight: 700, fontSize: "0.9rem" }} className="mt-1">
+                            {formatINR(p.price)}
+                          </p>
+                          <div className="flex items-center gap-3 mt-2">
+                            <Link to={`/product/${p.slug}`} style={{ color: "#C99724", fontFamily: "'Manrope', sans-serif", fontSize: "0.75rem", fontWeight: 600 }}>
+                              View Details
+                            </Link>
+                            <button onClick={() => removeFromWishlist(p.id)} style={{ color: "#DC2626", fontFamily: "'Manrope', sans-serif", fontSize: "0.75rem" }}>
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

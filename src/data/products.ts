@@ -6,6 +6,12 @@ export interface ProductVariant {
   priceOverride?: number;
 }
 
+export interface ProductColor {
+  name: string;
+  hex: string;
+  image?: string;
+}
+
 export interface Product {
   id: string;
   slug: string;
@@ -16,7 +22,7 @@ export interface Product {
   originalPrice?: number;
   description: string;
   shortDescription: string;
-  colors: { name: string; hex: string }[];
+  colors: ProductColor[];
   sizes: string[];
   images: string[];
   variants: ProductVariant[];
@@ -43,7 +49,10 @@ export const products: Product[] = [
     originalPrice: 5499,
     shortDescription: "Opulent Banarasi silk with zari weaving in rich red and gold.",
     description: "Crafted in the heart of Varanasi, this Banarasi silk saree features intricate zari weaving in a timeless red and gold combination. The rich silk fabric drapes beautifully and is perfect for weddings, festive occasions, and celebrations. Each saree is a piece of art that reflects India's weaving heritage.",
-    colors: [{ name: "Red-Gold", hex: "#9B1C1C" }, { name: "Maroon-Gold", hex: "#800020" }],
+    colors: [
+      { name: "Red-Gold", hex: "#9B1C1C", image: unsplash("1618489335755-e3aa2b16cd7a") },
+      { name: "Maroon-Gold", hex: "#800020", image: unsplash("1610030469983-98e550d6193c") },
+    ],
     sizes: ["Free Size"],
     images: [unsplash("1618489335755-e3aa2b16cd7a"), unsplash("1610030469983-98e550d6193c")],
     variants: [
@@ -63,7 +72,10 @@ export const products: Product[] = [
     originalPrice: 7999,
     shortDescription: "Authentic Kanjivaram with temple border and zari motifs.",
     description: "Sourced from the looms of Kanchipuram, this pure mulberry silk saree features a classic temple border with heavy zari motifs. The vibrant green and gold combination is a quintessential choice for South Indian weddings. Comes with a matching blouse piece.",
-    colors: [{ name: "Green-Gold", hex: "#2D6A4F" }, { name: "Blue-Gold", hex: "#1B4F8A" }],
+    colors: [
+      { name: "Green-Gold", hex: "#2D6A4F", image: unsplash("1708182564325-fb1d3a3864d3") },
+      { name: "Blue-Gold", hex: "#1B4F8A", image: unsplash("1617627143750-d86bc21e42bb") },
+    ],
     sizes: ["Free Size"],
     images: [unsplash("1708182564325-fb1d3a3864d3"), unsplash("1617627143750-d86bc21e42bb")],
     variants: [
@@ -82,9 +94,17 @@ export const products: Product[] = [
     originalPrice: 3299,
     shortDescription: "Flowy georgette saree with sequin border for parties.",
     description: "Light as a feather and glamorous, this georgette party wear saree features a heavy sequin-work border that catches the light beautifully. The soft fabric drapes effortlessly and is easy to wear, making it a favourite for cocktail parties, receptions, and festive evenings.",
-    colors: [{ name: "Rose Pink", hex: "#E91E8C" }, { name: "Lavender", hex: "#9B59B6" }, { name: "Teal", hex: "#00838F" }],
+    colors: [
+      { name: "Rose Pink", hex: "#E91E8C", image: unsplash("1597897569252-9df44c7de0db") },
+      { name: "Lavender", hex: "#9B59B6", image: unsplash("1617627143750-d86bc21e42bb") },
+      { name: "Teal", hex: "#00838F", image: unsplash("1708182564325-fb1d3a3864d3") },
+    ],
     sizes: ["Free Size"],
-    images: [unsplash("1597897569252-9df44c7de0db"), unsplash("1617627143750-d86bc21e42bb")],
+    images: [
+      unsplash("1597897569252-9df44c7de0db"),
+      unsplash("1617627143750-d86bc21e42bb"),
+      unsplash("1708182564325-fb1d3a3864d3"),
+    ],
     variants: [
       { sku: "GPS-FS-PNK", size: "Free Size", color: "Rose Pink", stock: 10 },
       { sku: "GPS-FS-LAV", size: "Free Size", color: "Lavender", stock: 7 },
@@ -103,9 +123,17 @@ export const products: Product[] = [
     originalPrice: 1699,
     shortDescription: "Breathable cotton saree with vibrant block print design.",
     description: "Perfect for everyday wear and office use, this pure cotton saree features a beautiful block print design in indigo and white. The breathable fabric keeps you cool through the day, while the traditional print adds elegance to even the simplest of looks.",
-    colors: [{ name: "Indigo Blue", hex: "#264796" }, { name: "Earthy Red", hex: "#B34040" }, { name: "Forest Green", hex: "#2E5A27" }],
+    colors: [
+      { name: "Indigo Blue", hex: "#264796", image: unsplash("1739429942851-9083ee185d3d") },
+      { name: "Earthy Red", hex: "#B34040", image: unsplash("1618489335755-e3aa2b16cd7a") },
+      { name: "Forest Green", hex: "#2E5A27", image: unsplash("1708182564325-fb1d3a3864d3") },
+    ],
     sizes: ["Free Size"],
-    images: [unsplash("1739429942851-9083ee185d3d"), unsplash("1708182564325-fb1d3a3864d3")],
+    images: [
+      unsplash("1739429942851-9083ee185d3d"),
+      unsplash("1618489335755-e3aa2b16cd7a"),
+      unsplash("1708182564325-fb1d3a3864d3"),
+    ],
     variants: [
       { sku: "CPS-FS-IB", size: "Free Size", color: "Indigo Blue", stock: 15 },
       { sku: "CPS-FS-ER", size: "Free Size", color: "Earthy Red", stock: 12 },
@@ -123,7 +151,10 @@ export const products: Product[] = [
     price: 1799,
     shortDescription: "Lightweight chiffon saree with delicate floral print.",
     description: "This graceful chiffon saree features a delicate all-over floral print in soft peach and ivory tones. The lightweight fabric flows effortlessly and is ideal for day events, family gatherings, and casual celebrations. Easy to drape and maintain.",
-    colors: [{ name: "Peach", hex: "#FFCBA4" }, { name: "Ivory", hex: "#FFFFF0" }],
+    colors: [
+      { name: "Peach", hex: "#FFCBA4", image: unsplash("1693023656257-87c142566ad3") },
+      { name: "Ivory", hex: "#FFFFF0", image: unsplash("1739429942851-9083ee185d3d") },
+    ],
     sizes: ["Free Size"],
     images: [unsplash("1693023656257-87c142566ad3"), unsplash("1739429942851-9083ee185d3d")],
     variants: [
@@ -142,7 +173,10 @@ export const products: Product[] = [
     originalPrice: 3599,
     shortDescription: "Sheer Chanderi silk with golden buti work all over.",
     description: "Woven in Chanderi, Madhya Pradesh, this exquisite silk-cotton blend saree features fine buti work woven in gold thread across the sheer body. The lightweight yet luminous fabric catches the light beautifully, making it ideal for festive daytime events.",
-    colors: [{ name: "Yellow-Gold", hex: "#D4A017" }, { name: "Pink-Gold", hex: "#D4547A" }],
+    colors: [
+      { name: "Yellow-Gold", hex: "#D4A017", image: unsplash("1597897569252-9df44c7de0db") },
+      { name: "Pink-Gold", hex: "#D4547A", image: unsplash("1618489335755-e3aa2b16cd7a") },
+    ],
     sizes: ["Free Size"],
     images: [unsplash("1597897569252-9df44c7de0db"), unsplash("1618489335755-e3aa2b16cd7a")],
     variants: [
@@ -161,7 +195,10 @@ export const products: Product[] = [
     price: 1599,
     shortDescription: "Handwoven linen saree in natural tones with zari border.",
     description: "Sustainable and stylish, this handwoven linen saree comes in natural earth tones with a fine zari border. A favourite among working women for its easy-drape quality and understated elegance. Pairs beautifully with simple jewellery and a minimalist blouse.",
-    colors: [{ name: "Natural", hex: "#C4A882" }, { name: "Slate Grey", hex: "#6B7280" }],
+    colors: [
+      { name: "Natural", hex: "#C4A882", image: unsplash("1610030469983-98e550d6193c") },
+      { name: "Slate Grey", hex: "#6B7280", image: unsplash("1739429942851-9083ee185d3d") },
+    ],
     sizes: ["Free Size"],
     images: [unsplash("1610030469983-98e550d6193c"), unsplash("1739429942851-9083ee185d3d")],
     variants: [
@@ -184,9 +221,17 @@ export const products: Product[] = [
     originalPrice: 1999,
     shortDescription: "Floor-length anarkali with hand-embroidered neckline.",
     description: "This stunning floor-length anarkali kurti features intricate hand embroidery at the yoke and neckline. Made from premium georgette fabric, the flared silhouette creates a graceful, feminine look. Perfect for festivals, family functions, and special evenings. Comes with inner lining.",
-    colors: [{ name: "Maroon", hex: "#800020" }, { name: "Royal Blue", hex: "#1B3A8A" }, { name: "Bottle Green", hex: "#1A5C38" }],
+    colors: [
+      { name: "Royal Blue", hex: "#1B3A8A", image: unsplash("1580708570642-2ac35ad8d678") },
+      { name: "Maroon", hex: "#800020", image: unsplash("1708534246051-7f47b279e94b") },
+      { name: "Bottle Green", hex: "#1A5C38", image: unsplash("1669196258957-734cc2d2dddd") },
+    ],
     sizes: ["XS", "S", "M", "L", "XL", "XXL"],
-    images: [unsplash("1580708570642-2ac35ad8d678"), unsplash("1708534246051-7f47b279e94b")],
+    images: [
+      unsplash("1580708570642-2ac35ad8d678"),
+      unsplash("1708534246051-7f47b279e94b"),
+      unsplash("1669196258957-734cc2d2dddd"),
+    ],
     variants: [
       { sku: "AEK-S-MRN", size: "S", color: "Maroon", stock: 8 },
       { sku: "AEK-M-MRN", size: "M", color: "Maroon", stock: 10 },
@@ -210,9 +255,17 @@ export const products: Product[] = [
     originalPrice: 1199,
     shortDescription: "Everyday floral cotton kurti with mandarin collar.",
     description: "A wardrobe staple for everyday wear, this straight-cut cotton kurti features a fresh floral print with a mandarin collar and 3/4 sleeves. The pure cotton fabric is soft, breathable, and ideal for long summer days. Pairs well with leggings, palazzo pants, or jeans.",
-    colors: [{ name: "Blue Floral", hex: "#3B6FA0" }, { name: "Peach Floral", hex: "#E8A87C" }, { name: "Green Floral", hex: "#3A7D44" }],
+    colors: [
+      { name: "Blue Floral", hex: "#3B6FA0", image: unsplash("1604436607823-d721dfe2df46") },
+      { name: "Peach Floral", hex: "#E8A87C", image: unsplash("1580709906575-0c52ca5a21c6") },
+      { name: "Green Floral", hex: "#3A7D44", image: unsplash("1708534419572-6e6614a53ca1") },
+    ],
     sizes: ["XS", "S", "M", "L", "XL", "XXL"],
-    images: [unsplash("1604436607823-d721dfe2df46"), unsplash("1580709906575-0c52ca5a21c6")],
+    images: [
+      unsplash("1604436607823-d721dfe2df46"),
+      unsplash("1580709906575-0c52ca5a21c6"),
+      unsplash("1708534419572-6e6614a53ca1"),
+    ],
     variants: [
       { sku: "FCK-XS-BF", size: "XS", color: "Blue Floral", stock: 10 },
       { sku: "FCK-S-BF", size: "S", color: "Blue Floral", stock: 14 },
@@ -237,9 +290,17 @@ export const products: Product[] = [
     originalPrice: 2499,
     shortDescription: "Complete three-piece salwar suit in rich purple georgette.",
     description: "An elegant three-piece salwar kameez set featuring a long kameez with intricate print, matching straight-cut salwar, and a sheer dupatta. Made from soft georgette fabric, this set is perfect for family gatherings, festive occasions, and celebrations. Fully stitched and ready to wear.",
-    colors: [{ name: "Purple", hex: "#7B5EA7" }, { name: "Mustard", hex: "#D4A017" }, { name: "Coral", hex: "#E8603C" }],
+    colors: [
+      { name: "Purple", hex: "#7B5EA7", image: unsplash("1708534246051-7f47b279e94b") },
+      { name: "Mustard", hex: "#D4A017", image: unsplash("1597897569252-9df44c7de0db") },
+      { name: "Coral", hex: "#E8603C", image: unsplash("1669196258957-734cc2d2dddd") },
+    ],
     sizes: ["XS", "S", "M", "L", "XL", "XXL"],
-    images: [unsplash("1708534246051-7f47b279e94b"), unsplash("1669196258957-734cc2d2dddd")],
+    images: [
+      unsplash("1708534246051-7f47b279e94b"),
+      unsplash("1597897569252-9df44c7de0db"),
+      unsplash("1669196258957-734cc2d2dddd"),
+    ],
     variants: [
       { sku: "SKS-S-PRP", size: "S", color: "Purple", stock: 7 },
       { sku: "SKS-M-PRP", size: "M", color: "Purple", stock: 9 },
@@ -261,9 +322,17 @@ export const products: Product[] = [
     price: 999,
     shortDescription: "Handcrafted block print A-line kurti in natural dyes.",
     description: "A celebration of traditional Indian craftsmanship, this A-line kurti is hand block-printed using natural vegetable dyes on soft cotton fabric. The relaxed fit and knee-length silhouette make it versatile for both casual and semi-formal occasions. Each piece is unique.",
-    colors: [{ name: "Beige-Red", hex: "#C17F59" }, { name: "White-Blue", hex: "#5B9BD5" }, { name: "Cream-Black", hex: "#3D3D3D" }],
+    colors: [
+      { name: "Beige-Red", hex: "#C17F59", image: unsplash("1580709906575-0c52ca5a21c6") },
+      { name: "White-Blue", hex: "#5B9BD5", image: unsplash("1604436607823-d721dfe2df46") },
+      { name: "Cream-Black", hex: "#3D3D3D", image: unsplash("1708534419572-6e6614a53ca1") },
+    ],
     sizes: ["XS", "S", "M", "L", "XL", "XXL"],
-    images: [unsplash("1580709906575-0c52ca5a21c6"), unsplash("1604436607823-d721dfe2df46")],
+    images: [
+      unsplash("1580709906575-0c52ca5a21c6"),
+      unsplash("1604436607823-d721dfe2df46"),
+      unsplash("1708534419572-6e6614a53ca1"),
+    ],
     variants: [
       { sku: "ABK-S-BR", size: "S", color: "Beige-Red", stock: 9 },
       { sku: "ABK-M-BR", size: "M", color: "Beige-Red", stock: 11 },
@@ -285,7 +354,10 @@ export const products: Product[] = [
     originalPrice: 2999,
     shortDescription: "Stylish kurti and jacket set for festive and party wear.",
     description: "Stand out with this designer kurti and jacket set. The inner kurti features elegant embroidery while the outer jacket adds a layer of sophistication with its structured silhouette and contrast fabric trim. A modern take on traditional Indian fashion.",
-    colors: [{ name: "Wine Red", hex: "#722F37" }, { name: "Teal", hex: "#008080" }],
+    colors: [
+      { name: "Wine Red", hex: "#722F37", image: unsplash("1669196258957-734cc2d2dddd") },
+      { name: "Teal", hex: "#008080", image: unsplash("1580708570642-2ac35ad8d678") },
+    ],
     sizes: ["S", "M", "L", "XL"],
     images: [unsplash("1669196258957-734cc2d2dddd"), unsplash("1580708570642-2ac35ad8d678")],
     variants: [
@@ -308,9 +380,17 @@ export const products: Product[] = [
     originalPrice: 999,
     shortDescription: "Soft rayon kurti with thread embroidery on yoke.",
     description: "A lightweight, casual-chic kurti made from soft rayon with thread embroidery at the yoke. Perfect for college, office, or casual outings. The straight fit is flattering for all body types and the fabric stays wrinkle-free throughout the day.",
-    colors: [{ name: "Sky Blue", hex: "#87CEEB" }, { name: "Mint Green", hex: "#98FF98" }, { name: "Lavender", hex: "#B57BDB" }],
+    colors: [
+      { name: "Sky Blue", hex: "#87CEEB", image: unsplash("1708534419572-6e6614a53ca1") },
+      { name: "Mint Green", hex: "#98FF98", image: unsplash("1604436607823-d721dfe2df46") },
+      { name: "Lavender", hex: "#B57BDB", image: unsplash("1708534246051-7f47b279e94b") },
+    ],
     sizes: ["XS", "S", "M", "L", "XL", "XXL"],
-    images: [unsplash("1708534419572-6e6614a53ca1"), unsplash("1604436607823-d721dfe2df46")],
+    images: [
+      unsplash("1708534419572-6e6614a53ca1"),
+      unsplash("1604436607823-d721dfe2df46"),
+      unsplash("1708534246051-7f47b279e94b"),
+    ],
     variants: [
       { sku: "REK-XS-SB", size: "XS", color: "Sky Blue", stock: 10 },
       { sku: "REK-S-SB", size: "S", color: "Sky Blue", stock: 13 },
@@ -336,7 +416,10 @@ export const products: Product[] = [
     originalPrice: 799,
     shortDescription: "Traditional gold-finish jhumkas with meenakari detail.",
     description: "These beautifully crafted jhumka earrings feature intricate meenakari enamel work in vibrant colours set against a gold finish. A perfect match for sarees and kurtis alike. Lightweight design ensures comfort for all-day wear.",
-    colors: [{ name: "Gold-Red", hex: "#C99724" }, { name: "Gold-Green", hex: "#4A7C59" }],
+    colors: [
+      { name: "Gold-Red", hex: "#C99724", image: unsplash("1606760227091-3dd870d97f1d") },
+      { name: "Gold-Green", hex: "#4A7C59", image: unsplash("1549439602-43ebca2327af") },
+    ],
     sizes: ["One Size"],
     images: [unsplash("1606760227091-3dd870d97f1d"), unsplash("1549439602-43ebca2327af")],
     variants: [

@@ -55,19 +55,23 @@ export default function CartPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Items */}
           <div className="lg:col-span-2 space-y-4">
-            {items.map((item) => (
-              <div
-                key={`${item.product.id}-${item.size}-${item.color}`}
-                style={{ backgroundColor: "#fff", border: "1px solid #E5E7EB", borderRadius: "12px" }}
-                className="flex gap-4 p-4"
-              >
-                <Link to={`/product/${item.product.slug}`} className="flex-shrink-0">
-                  <img
-                    src={item.product.images[0]}
-                    alt={item.product.name}
-                    style={{ width: "90px", height: "110px", objectFit: "cover", borderRadius: "8px", backgroundColor: "#F3F4F6" }}
-                  />
-                </Link>
+            {items.map((item) => {
+              const itemImage =
+                item.product.colors.find((c) => c.name === item.color)?.image ||
+                item.product.images[0];
+              return (
+                <div
+                  key={`${item.product.id}-${item.size}-${item.color}`}
+                  style={{ backgroundColor: "#fff", border: "1px solid #E5E7EB", borderRadius: "12px" }}
+                  className="flex gap-4 p-4"
+                >
+                  <Link to={`/product/${item.product.slug}`} className="flex-shrink-0">
+                    <img
+                      src={itemImage}
+                      alt={`${item.product.name} - ${item.color}`}
+                      style={{ width: "90px", height: "110px", objectFit: "cover", borderRadius: "8px", backgroundColor: "#F3F4F6" }}
+                    />
+                  </Link>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <div>
@@ -126,7 +130,8 @@ export default function CartPage() {
                   </div>
                 </div>
               </div>
-            ))}
+            );
+          })}
 
             <Link
               to="/shop"

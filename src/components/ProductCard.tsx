@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faHeart as faHeartSolid } from "@fortawesome/free-solid-svg-icons";
+import { faHeart as faHeartRegular } from "@fortawesome/free-regular-svg-icons";
 import type { Product } from "../data/products";
 import { getTotalStock } from "../data/products";
+import { useWishlist } from "../context/WishlistContext";
 
 interface ProductCardProps {
   product: Product;
@@ -39,10 +43,23 @@ function StockBadge({ stock }: { stock: number }) {
 export default function ProductCard({ product, className = "" }: ProductCardProps) {
   const stock = getTotalStock(product);
   const [hovered, setHovered] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const { isInWishlist, toggleWishlist } = useWishlist();
+  const isLiked = isInWishlist(product.id);
+
   const hasSecond = product.images.length > 1;
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
+
+  const handleLikeClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleWishlist(product);
+  };
+
+  const currentImage = product.images[selectedImageIndex] || product.images[0];
+  const secondImage = product.images[(selectedImageIndex + 1) % product.images.length] || product.images[0];
 
   return (
     <Link
@@ -64,7 +81,7 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
       >
         {/* Primary image */}
         <img
-          src={product.images[0]}
+          src={currentImage}
           alt={product.name}
           loading="lazy"
           style={{
@@ -84,7 +101,7 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
         {/* Secondary image (swaps in on hover) */}
         {hasSecond && (
           <img
-            src={product.images[1]}
+            src={secondImage}
             alt={product.name}
             loading="lazy"
             style={{
@@ -113,7 +130,7 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
         />
 
         {/* Top badges */}
-        <div style={{ position: "absolute", top: "10px", left: "10px", display: "flex", flexDirection: "column", gap: "5px" }}>
+        <div style={{ position: "absolute", top: "10px", left: "10px", display: "flex", flexDirection: "column", gap: "5px", zIndex: 2 }}>
           {product.isNew && (
             <span
               style={{
@@ -148,6 +165,35 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
             </span>
           )}
         </div>
+
+        {/* Wishlist / Like button */}
+        <button
+          type="button"
+          onClick={handleLikeClick}
+          aria-label={isLiked ? "Remove from wishlist" : "Add to wishlist"}
+          style={{
+            position: "absolute",
+            top: "10px",
+            right: "10px",
+            width: "32px",
+            height: "32px",
+            borderRadius: "50%",
+            backgroundColor: isLiked ? "rgba(201,151,36,0.95)" : "rgba(255,255,255,0.9)",
+            color: isLiked ? "#FFFFFF" : "#4B5563",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 2,
+            transition: "all 0.2s",
+          }}
+          className="hover:scale-110 active:scale-95"
+        >
+          <FontAwesomeIcon
+            icon={isLiked ? faHeartSolid : faHeartRegular}
+            style={{ fontSize: "0.85rem", color: isLiked ? "#FFFFFF" : "#374151" }}
+          />
+        </button>
 
         {/* Quick view pill */}
         <div
@@ -273,18 +319,29 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
         {/* Bottom row: color swatches + stock */}
         <div className="flex items-center justify-between mt-1.5">
           <div className="flex items-center gap-1">
-            {product.colors.slice(0, 4).map((color) => (
-              <span
+            {product.colors.slice(0, 4).map((color, idx) => (
+              <button
+                type="button"
                 key={color.name}
                 title={color.name}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSelectedImageIndex(idx % product.images.length);
+                }}
+                onMouseEnter={() => {
+                  setSelectedImageIndex(idx % product.images.length);
+                }}
                 style={{
                   backgroundColor: color.hex,
                   width: "12px",
                   height: "12px",
                   borderRadius: "50%",
-                  border: "1.5px solid #E5E7EB",
+                  border: `1.5px solid ${selectedImageIndex === idx % product.images.length ? "#C99724" : "#E5E7EB"}`,
+                  outline: selectedImageIndex === idx % product.images.length ? "1px solid #C99724" : "none",
                   display: "inline-block",
                   transition: "transform 0.15s",
+                  cursor: "pointer",
                 }}
                 className="hover:scale-125"
               />

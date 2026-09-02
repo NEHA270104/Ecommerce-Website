@@ -13,9 +13,11 @@ import {
   faXmark,
   faRightToBracket,
   faStar,
+  faHeart,
 } from "@fortawesome/free-solid-svg-icons";
 import Logo from "./Logo";
 import { useCart } from "../context/CartContext";
+import { useWishlist } from "../context/WishlistContext";
 import { useAuth } from "../context/AuthContext";
 import AnnouncementBar from "./AnnouncementBar";
 
@@ -33,6 +35,7 @@ export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { totalItems } = useCart();
+  const { totalWishlist } = useWishlist();
   const { isAuthenticated } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -61,29 +64,32 @@ export default function Header() {
         style={{
           backgroundColor: "#FAF9F6",
           borderBottom: "1px solid #E5E7EB",
-          boxShadow: scrolled ? "0 1px 12px rgba(11,23,54,0.08)" : "none",
-          transition: "box-shadow 0.25s",
+          boxShadow: scrolled ? "0 4px 20px rgba(11,23,54,0.08)" : "none",
+          transition: "box-shadow 0.2s ease",
         }}
       >
-        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-
-            {/* Mobile: hamburger */}
-            <button
-              className="lg:hidden p-2 -ml-1 rounded-lg hover:bg-gray-100 transition-colors"
-              onClick={() => setMobileOpen(!mobileOpen)}
-              aria-label="Toggle menu"
-              style={{ color: "#0B1736" }}
-            >
-              <FontAwesomeIcon icon={mobileOpen ? faXmark : faBars} size="lg" />
-            </button>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20">
+            {/* Mobile menu button */}
+            <div className="flex items-center gap-2 lg:hidden">
+              <button
+                onClick={() => setMobileOpen(!mobileOpen)}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                aria-label="Toggle menu"
+                style={{ color: "#0B1736" }}
+              >
+                <FontAwesomeIcon icon={mobileOpen ? faXmark : faBars} className="text-xl" />
+              </button>
+            </div>
 
             {/* Logo */}
-            <Link to="/" className="flex-shrink-0">
-              <Logo height={56} />
-            </Link>
+            <div className="flex-shrink-0 flex items-center">
+              <Link to="/" className="flex items-center">
+                <Logo height={56} />
+              </Link>
+            </div>
 
-            {/* Desktop nav */}
+            {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center gap-1">
               {navLinks.map((link) => (
                 <Link
@@ -115,9 +121,9 @@ export default function Header() {
               ))}
             </nav>
 
-            {/* Action icons */}
-            <div className="flex items-center gap-1">
-              {/* Search */}
+            {/* Action icons (Clean single set) */}
+            <div className="flex items-center gap-1.5">
+              {/* 1. Search */}
               <button
                 onClick={() => setSearchOpen(!searchOpen)}
                 className="p-2.5 rounded-lg hover:bg-gray-100 transition-colors"
@@ -127,17 +133,39 @@ export default function Header() {
                 <FontAwesomeIcon icon={faMagnifyingGlass} />
               </button>
 
-              {/* Account */}
+              {/* 2. Wishlist */}
               <Link
-                to={isAuthenticated ? "/account" : "/auth/sign-in"}
-                className="p-2.5 rounded-lg hover:bg-gray-100 transition-colors"
-                aria-label={isAuthenticated ? "My Account" : "Sign In"}
+                to="/wishlist"
+                className="relative p-2.5 rounded-lg hover:bg-gray-100 transition-colors"
+                aria-label="Wishlist"
                 style={{ color: "#374151" }}
               >
-                <FontAwesomeIcon icon={isAuthenticated ? faUser : faRightToBracket} />
+                <FontAwesomeIcon icon={faHeart} />
+                {totalWishlist > 0 && (
+                  <span
+                    style={{
+                      backgroundColor: "#C99724",
+                      color: "#fff",
+                      fontFamily: "'Manrope', sans-serif",
+                      fontSize: "9px",
+                      fontWeight: 800,
+                      lineHeight: 1,
+                      minWidth: "17px",
+                      height: "17px",
+                      borderRadius: "9px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "0 4px",
+                    }}
+                    className="absolute -top-0.5 -right-0.5"
+                  >
+                    {totalWishlist > 9 ? "9+" : totalWishlist}
+                  </span>
+                )}
               </Link>
 
-              {/* Cart */}
+              {/* 3. Cart */}
               <Link
                 to="/cart"
                 className="relative p-2.5 rounded-lg hover:bg-gray-100 transition-colors"
@@ -169,13 +197,23 @@ export default function Header() {
                 )}
               </Link>
 
-              {/* Login link */}
+              {/* 4. Single Login / Account Action */}
               <Link
-                to="/login"
+                to={isAuthenticated ? "/account" : "/login"}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg ml-1 transition-colors hover:bg-gray-100"
-                style={{ color: "#374151", fontFamily: "'Manrope', sans-serif", fontSize: "0.825rem", fontWeight: 600, textDecoration: "none" }}
+                style={{
+                  color: "#374151",
+                  fontFamily: "'Manrope', sans-serif",
+                  fontSize: "0.825rem",
+                  fontWeight: 600,
+                  textDecoration: "none",
+                }}
               >
-                Login
+                <FontAwesomeIcon
+                  icon={isAuthenticated ? faUser : faRightToBracket}
+                  style={{ fontSize: "0.8rem", color: isAuthenticated ? "#C99724" : "#6B7280" }}
+                />
+                <span>{isAuthenticated ? "Account" : "Login"}</span>
               </Link>
             </div>
           </div>
@@ -253,7 +291,7 @@ export default function Header() {
                 </Link>
               ))}
               <Link
-                to={isAuthenticated ? "/account" : "/auth/sign-in"}
+                to="/wishlist"
                 style={{
                   fontFamily: "'Manrope', sans-serif",
                   color: "#374151",
@@ -267,14 +305,11 @@ export default function Header() {
                   borderBottom: "1px solid #F3F4F6",
                 }}
               >
-                <FontAwesomeIcon
-                  icon={isAuthenticated ? faUser : faRightToBracket}
-                  style={{ width: "16px", color: "#9CA3AF" }}
-                />
-                {isAuthenticated ? "My Account" : "Sign In"}
+                <FontAwesomeIcon icon={faHeart} style={{ width: "16px", color: "#9CA3AF" }} />
+                Wishlist {totalWishlist > 0 && `(${totalWishlist})`}
               </Link>
               <Link
-                to="/login"
+                to={isAuthenticated ? "/account" : "/login"}
                 style={{
                   fontFamily: "'Manrope', sans-serif",
                   color: "#374151",
@@ -283,12 +318,15 @@ export default function Header() {
                   display: "flex",
                   alignItems: "center",
                   gap: "12px",
-                  padding: "10px 4px",
+                  padding: "12px 4px",
                   textDecoration: "none",
                 }}
               >
-                <FontAwesomeIcon icon={faRightToBracket} style={{ width: "16px", color: "#9CA3AF" }} />
-                Login
+                <FontAwesomeIcon
+                  icon={isAuthenticated ? faUser : faRightToBracket}
+                  style={{ width: "16px", color: "#9CA3AF" }}
+                />
+                {isAuthenticated ? "My Account" : "Login / Sign Up"}
               </Link>
             </nav>
           </div>

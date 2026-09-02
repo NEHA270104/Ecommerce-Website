@@ -214,7 +214,7 @@ export default function AdminLoginPage() {
                   autoComplete="email"
                   value={email}
                   onChange={handleEmailChange}
-                  placeholder="admin@vrishabhanviventures.com"
+                  placeholder="Enter your email"
                   style={{
                     fontFamily: "'Manrope', sans-serif",
                     fontSize: "0.875rem",
@@ -261,7 +261,7 @@ export default function AdminLoginPage() {
                   autoComplete="current-password"
                   value={password}
                   onChange={handlePasswordChange}
-                  placeholder="••••••••••••"
+                  placeholder="Enter your password"
                   style={{
                     fontFamily: "'Manrope', sans-serif",
                     fontSize: "0.875rem",

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "./context/CartContext";
+import { WishlistProvider } from "./context/WishlistContext";
 import { AuthProvider } from "./context/AuthContext";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
@@ -9,6 +10,7 @@ import ShopPage from "./pages/ShopPage";
 import CategoriesPage from "./pages/CategoriesPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import CartPage from "./pages/CartPage";
+import WishlistPage from "./pages/WishlistPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
 import AccountPage from "./pages/AccountPage";
@@ -45,51 +47,53 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <CartProvider>
-          <Routes>
-            {/* Storefront */}
-            <Route path="/" element={<StorefrontLayout><HomePage /></StorefrontLayout>} />
-            <Route path="/shop" element={<StorefrontLayout><ShopPage /></StorefrontLayout>} />
-            <Route path="/categories" element={<StorefrontLayout><CategoriesPage /></StorefrontLayout>} />
-            <Route path="/category/:slug" element={<StorefrontLayout><ShopPage /></StorefrontLayout>} />
-            <Route path="/product/:slug" element={<StorefrontLayout><ProductDetailPage /></StorefrontLayout>} />
-            <Route path="/cart" element={<StorefrontLayout><CartPage /></StorefrontLayout>} />
-            <Route path="/checkout" element={<StorefrontLayout><CheckoutPage /></StorefrontLayout>} />
-            <Route path="/order-success" element={<StorefrontLayout><OrderSuccessPage /></StorefrontLayout>} />
-            <Route path="/account" element={<StorefrontLayout><AccountPage /></StorefrontLayout>} />
-            <Route path="/about" element={<StorefrontLayout><AboutPage /></StorefrontLayout>} />
-            <Route path="/contact" element={<StorefrontLayout><ContactPage /></StorefrontLayout>} />
-            <Route path="/returns" element={<StorefrontLayout><ReturnPolicyPage /></StorefrontLayout>} />
+        <WishlistProvider>
+          <CartProvider>
+            <Routes>
+              {/* Storefront */}
+              <Route path="/" element={<StorefrontLayout><HomePage /></StorefrontLayout>} />
+              <Route path="/shop" element={<StorefrontLayout><ShopPage /></StorefrontLayout>} />
+              <Route path="/categories" element={<StorefrontLayout><CategoriesPage /></StorefrontLayout>} />
+              <Route path="/category/:slug" element={<StorefrontLayout><ShopPage /></StorefrontLayout>} />
+              <Route path="/product/:slug" element={<StorefrontLayout><ProductDetailPage /></StorefrontLayout>} />
+              <Route path="/cart" element={<StorefrontLayout><CartPage /></StorefrontLayout>} />
+              <Route path="/wishlist" element={<StorefrontLayout><WishlistPage /></StorefrontLayout>} />
+              <Route path="/checkout" element={<StorefrontLayout><CheckoutPage /></StorefrontLayout>} />
+              <Route path="/order-success" element={<StorefrontLayout><OrderSuccessPage /></StorefrontLayout>} />
+              <Route path="/account" element={<StorefrontLayout><AccountPage /></StorefrontLayout>} />
+              <Route path="/about" element={<StorefrontLayout><AboutPage /></StorefrontLayout>} />
+              <Route path="/contact" element={<StorefrontLayout><ContactPage /></StorefrontLayout>} />
+              <Route path="/returns" element={<StorefrontLayout><ReturnPolicyPage /></StorefrontLayout>} />
 
-            {/* Admin Login */}
-            <Route path="/login" element={<AdminLoginPage />} />
+              {/* Unified Auth (Admin & Customer) */}
+              <Route path="/login" element={<SignInPage initialMode="login" />} />
+              <Route path="/auth/sign-in" element={<SignInPage initialMode="login" />} />
+              <Route path="/auth/sign-up" element={<SignUpPage />} />
+              <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/admin/login" element={<AdminLoginPage />} />
 
-            {/* Customer Auth */}
-            <Route path="/auth/sign-in" element={<SignInPage />} />
-            <Route path="/auth/sign-up" element={<SignUpPage />} />
-            <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
+              {/* Admin (Protected) */}
+              <Route
+                path="/admin"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminLayout />
+                  </AdminProtectedRoute>
+                }
+              >
+                <Route index element={<AdminDashboard />} />
+                <Route path="orders" element={<AdminOrders />} />
+                <Route path="products" element={<AdminProducts />} />
+                <Route path="categories" element={<AdminCategories />} />
+                <Route path="inventory" element={<AdminInventory />} />
+                <Route path="customers" element={<AdminCustomers />} />
+              </Route>
 
-            {/* Admin (Protected) */}
-            <Route
-              path="/admin"
-              element={
-                <AdminProtectedRoute>
-                  <AdminLayout />
-                </AdminProtectedRoute>
-              }
-            >
-              <Route index element={<AdminDashboard />} />
-              <Route path="orders" element={<AdminOrders />} />
-              <Route path="products" element={<AdminProducts />} />
-              <Route path="categories" element={<AdminCategories />} />
-              <Route path="inventory" element={<AdminInventory />} />
-              <Route path="customers" element={<AdminCustomers />} />
-            </Route>
-
-            {/* 404 catch-all */}
-            <Route path="*" element={<StorefrontLayout><NotFoundPage /></StorefrontLayout>} />
-          </Routes>
-        </CartProvider>
+              {/* 404 catch-all */}
+              <Route path="*" element={<StorefrontLayout><NotFoundPage /></StorefrontLayout>} />
+            </Routes>
+          </CartProvider>
+        </WishlistProvider>
       </AuthProvider>
     </BrowserRouter>
   );

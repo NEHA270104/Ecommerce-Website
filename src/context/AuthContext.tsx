@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 
 export interface Address {
   id: string;
@@ -30,13 +30,17 @@ export interface User {
   joined: string;
 }
 
+interface StoredAccount extends User {
+  password: string;
+}
+
 interface AuthContextValue {
   user: User | null;
   orders: Order[];
   addresses: Address[];
   isAuthenticated: boolean;
-  signIn: (email: string, password: string) => boolean;
-  signUp: (name: string, email: string, password: string) => boolean;
+  signIn: (email: string, password: string) => { success: boolean; error?: string };
+  signUp: (name: string, email: string, password: string) => { success: boolean; error?: string };
   signOut: () => void;
   addOrder: (order: Omit<Order, "id" | "date">) => Order;
   addAddress: (address: Omit<Address, "id">) => void;
@@ -45,88 +49,176 @@ interface AuthContextValue {
   setDefaultAddress: (id: string) => void;
 }
 
-const DEMO_USER: User = {
-  id: "u1",
-  name: "Priya Sharma",
-  email: "priya@example.com",
-  phone: "9876543210",
-  joined: "2026-01-15",
-};
+const LS_CUSTOMER_SESSION = "vv_customer_session_v1";
+const LS_CUSTOMER_ACCOUNTS = "vv_customer_accounts_v1";
+const LS_CUSTOMER_ORDERS = "vv_customer_orders_v1";
+const LS_CUSTOMER_ADDRESSES = "vv_customer_addresses_v1";
 
-const DEMO_ORDERS: Order[] = [
-  {
-    id: "VV-2026-001",
-    date: "2026-08-20",
-    items: [
-      { name: "Elegant Floral Kurti", size: "M", color: "Peach", quantity: 1, price: 899, image: "https://images.unsplash.com/photo-1740992556357-f7fe9afff763?w=80&h=80&fit=crop&auto=format" },
-    ],
-    total: 899,
-    status: "Delivered",
-    paymentMethod: "COD",
-    address: { id: "a1", fullName: "Priya Sharma", phone: "9876543210", addressLine1: "42 Green Park", city: "Noida", state: "Uttar Pradesh", pinCode: "201301", isDefault: true },
-  },
-  {
-    id: "VV-2026-002",
-    date: "2026-09-01",
-    items: [
-      { name: "Classic Cotton Dress", size: "S", color: "Maroon", quantity: 1, price: 1499, image: "https://images.unsplash.com/photo-1708534246055-d7b149acb731?w=80&h=80&fit=crop&auto=format" },
-      { name: "Statement Fashion Earrings", size: "One Size", color: "Silver-Blue", quantity: 1, price: 599, image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=80&h=80&fit=crop&auto=format" },
-    ],
-    total: 2098,
-    status: "Confirmed",
-    paymentMethod: "COD",
-    address: { id: "a1", fullName: "Priya Sharma", phone: "9876543210", addressLine1: "42 Green Park", city: "Noida", state: "Uttar Pradesh", pinCode: "201301", isDefault: true },
-  },
-];
+function isAdminEmail(email: string): boolean {
+  const clean = email.trim().toLowerCase();
+  return (
+    clean.includes("vrishabhanviventures") ||
+    clean.startsWith("admin@") ||
+    clean === "admin"
+  );
+}
 
-const DEMO_ADDRESSES: Address[] = [
-  {
-    id: "a1",
-    fullName: "Priya Sharma",
-    phone: "9876543210",
-    addressLine1: "42 Green Park Colony",
-    addressLine2: "Near Sector 18",
-    city: "Noida",
-    state: "Uttar Pradesh",
-    pinCode: "201301",
-    isDefault: true,
-  },
-];
+function loadInitialUser(): User | null {
+  try {
+    const raw = localStorage.getItem(LS_CUSTOMER_SESSION);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as User;
+    if (parsed?.email && isAdminEmail(parsed.email)) {
+      localStorage.removeItem(LS_CUSTOMER_SESSION);
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function loadStorage<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function saveStorage(key: string, value: unknown) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // ignore
+  }
+}
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [user, setUser] = useState<User | null>(() => loadInitialUser());
+  const [orders, setOrders] = useState<Order[]>(() => {
+    const initial = loadInitialUser();
+    if (!initial) return [];
+    return loadStorage<Order[]>(`${LS_CUSTOMER_ORDERS}_${initial.id}`, []);
+  });
+  const [addresses, setAddresses] = useState<Address[]>(() => {
+    const initial = loadInitialUser();
+    if (!initial) return [];
+    return loadStorage<Address[]>(`${LS_CUSTOMER_ADDRESSES}_${initial.id}`, []);
+  });
 
-  const signIn = useCallback((email: string, _password: string) => {
-    if (email === DEMO_USER.email) {
-      setUser(DEMO_USER);
-      setOrders(DEMO_ORDERS);
-      setAddresses(DEMO_ADDRESSES);
-      return true;
+  // Sync session
+  useEffect(() => {
+    if (user && !isAdminEmail(user.email)) {
+      saveStorage(LS_CUSTOMER_SESSION, user);
+      setOrders(loadStorage<Order[]>(`${LS_CUSTOMER_ORDERS}_${user.id}`, []));
+      setAddresses(loadStorage<Address[]>(`${LS_CUSTOMER_ADDRESSES}_${user.id}`, []));
+    } else {
+      localStorage.removeItem(LS_CUSTOMER_SESSION);
+      setOrders([]);
+      setAddresses([]);
     }
-    return false;
+  }, [user]);
+
+  // Sync orders
+  useEffect(() => {
+    if (user && !isAdminEmail(user.email)) {
+      saveStorage(`${LS_CUSTOMER_ORDERS}_${user.id}`, orders);
+    }
+  }, [orders, user]);
+
+  // Sync addresses
+  useEffect(() => {
+    if (user && !isAdminEmail(user.email)) {
+      saveStorage(`${LS_CUSTOMER_ADDRESSES}_${user.id}`, addresses);
+    }
+  }, [addresses, user]);
+
+  const signIn = useCallback((email: string, password: string) => {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !password) {
+      return { success: false, error: "Email and password are required." };
+    }
+
+    if (isAdminEmail(cleanEmail)) {
+      return {
+        success: false,
+        error: "This is an administrator account. Please sign in through the Admin Portal.",
+      };
+    }
+
+    const accounts = loadStorage<StoredAccount[]>(LS_CUSTOMER_ACCOUNTS, []);
+    const found = accounts.find((acc) => acc.email.toLowerCase() === cleanEmail);
+
+    if (found) {
+      if (found.password === password) {
+        const { password: _, ...userInfo } = found;
+        setUser(userInfo);
+        return { success: true };
+      }
+      return { success: false, error: "Invalid email or password." };
+    }
+
+    return {
+      success: false,
+      error: "No customer account found with this email. Please click Sign Up below.",
+    };
   }, []);
 
-  const signUp = useCallback((name: string, email: string, _password: string) => {
-    setUser({ id: `u-${Date.now()}`, name, email, joined: new Date().toISOString().slice(0, 10) });
-    setOrders([]);
-    setAddresses([]);
-    return true;
+  const signUp = useCallback((name: string, email: string, password: string) => {
+    const cleanName = name.trim();
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanName || !cleanEmail || !password) {
+      return { success: false, error: "All fields are required." };
+    }
+
+    if (isAdminEmail(cleanEmail)) {
+      return {
+        success: false,
+        error: "This email address is reserved for administrative use.",
+      };
+    }
+
+    if (password.length < 6) {
+      return { success: false, error: "Password must be at least 6 characters." };
+    }
+
+    const accounts = loadStorage<StoredAccount[]>(LS_CUSTOMER_ACCOUNTS, []);
+    const existing = accounts.find((acc) => acc.email.toLowerCase() === cleanEmail);
+
+    if (existing) {
+      return { success: false, error: "An account with this email already exists. Please login." };
+    }
+
+    const newAccount: StoredAccount = {
+      id: `cust-${Date.now()}`,
+      name: cleanName,
+      email: cleanEmail,
+      joined: new Date().toISOString().slice(0, 10),
+      password,
+    };
+
+    saveStorage(LS_CUSTOMER_ACCOUNTS, [...accounts, newAccount]);
+    const { password: _, ...userInfo } = newAccount;
+    setUser(userInfo);
+    return { success: true };
   }, []);
 
   const signOut = useCallback(() => {
     setUser(null);
     setOrders([]);
     setAddresses([]);
+    localStorage.removeItem(LS_CUSTOMER_SESSION);
   }, []);
 
-  const addOrder = useCallback((order: Omit<Order, "id" | "date">) => {
+  const addOrder = useCallback((orderData: Omit<Order, "id" | "date">) => {
     const newOrder: Order = {
-      ...order,
-      id: `VV-2026-${String(Math.floor(Math.random() * 900) + 100)}`,
+      ...orderData,
+      id: `VV-${Date.now().toString().slice(-6)}`,
       date: new Date().toISOString().slice(0, 10),
     };
     setOrders((prev) => [newOrder, ...prev]);
@@ -134,9 +226,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addAddress = useCallback((addr: Omit<Address, "id">) => {
-    const newAddr: Address = { ...addr, id: `a-${Date.now()}` };
+    const newAddr: Address = { ...addr, id: `addr-${Date.now()}` };
     setAddresses((prev) => {
-      if (addr.isDefault) return [...prev.map((a) => ({ ...a, isDefault: false })), newAddr];
+      if (addr.isDefault) {
+        return [...prev.map((a) => ({ ...a, isDefault: false })), newAddr];
+      }
       return [...prev, newAddr];
     });
   }, []);
@@ -158,11 +252,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{
-      user, orders, addresses, isAuthenticated: !!user,
-      signIn, signUp, signOut, addOrder,
-      addAddress, updateAddress, deleteAddress, setDefaultAddress,
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        orders,
+        addresses,
+        isAuthenticated: !!user,
+        signIn,
+        signUp,
+        signOut,
+        addOrder,
+        addAddress,
+        updateAddress,
+        deleteAddress,
+        setDefaultAddress,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

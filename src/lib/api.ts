@@ -13,7 +13,14 @@
  * No tokens are stored in localStorage or sessionStorage.
  */
 
-const RAW_API_URL = import.meta.env.VITE_API_URL || "";
+const RAW_API_URL =
+  import.meta.env.VITE_API_URL ||
+  (typeof window !== "undefined" &&
+   (window.location.hostname === "vrishabhanvi.com" ||
+    window.location.hostname.endsWith(".vrishabhanvi.com") ||
+    window.location.hostname.endsWith(".pages.dev"))
+    ? "https://ecommerce-website-guzm.onrender.com"
+    : "");
 export const API_BASE_URL = RAW_API_URL.replace(/\/+$/, "");
 
 export function apiUrl(path: string): string {

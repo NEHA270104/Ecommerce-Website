@@ -63,8 +63,8 @@ interface StoreContextType {
 
 const StoreContext = createContext<StoreContextType | null>(null);
 
-const LS_PRODUCTS = "vv_products_v4";
-const LS_CATEGORIES = "vv_categories_v4";
+const LS_PRODUCTS = "vv_products_v5";
+const LS_CATEGORIES = "vv_categories_v5";
 const LS_ORDERS = "vv_orders_v4";
 
 function loadOrSeed<T>(key: string, seed: T[]): T[] {
@@ -82,7 +82,7 @@ function save(key: string, data: unknown) {
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>(() => loadOrSeed(LS_PRODUCTS, seedProducts));
   const [categories, setCategories] = useState<Category[]>(() => loadOrSeed(LS_CATEGORIES, seedCategories));
-  const [orders, setOrders] = useState<AdminOrder[]>(() => loadOrSeed(LS_ORDERS, SEED_ORDERS));
+  const [orders, setOrders] = useState<AdminOrder[]>(() => loadOrSeed(LS_ORDERS, []));
 
   useEffect(() => { save(LS_PRODUCTS, products); }, [products]);
   useEffect(() => { save(LS_CATEGORIES, categories); }, [categories]);

@@ -70,6 +70,29 @@ function parseJsonBody<T = Record<string, unknown>>(req: IncomingMessage): Promi
 function isOriginAllowed(origin: string | undefined): boolean {
   if (!origin) return false;
 
+  const cleanOrigin = origin.trim().replace(/\/+$/, "").toLowerCase();
+
+  // Production domain and subdomains
+  if (
+    cleanOrigin === "https://vrishabhanvi.com" ||
+    cleanOrigin === "https://www.vrishabhanvi.com" ||
+    cleanOrigin === "http://vrishabhanvi.com" ||
+    cleanOrigin === "http://www.vrishabhanvi.com" ||
+    cleanOrigin.endsWith(".vrishabhanvi.com")
+  ) {
+    return true;
+  }
+
+  // Allow Cloudflare Pages subdomains (*.pages.dev)
+  if (cleanOrigin.endsWith(".pages.dev")) {
+    return true;
+  }
+
+  // Allow localhost during local development
+  if (cleanOrigin.startsWith("http://localhost:") || cleanOrigin.startsWith("http://127.0.0.1:")) {
+    return true;
+  }
+
   const frontendEnv = process.env.FRONTEND_URL?.trim();
   if (!frontendEnv || frontendEnv === "*") return true;
 
@@ -78,20 +101,7 @@ function isOriginAllowed(origin: string | undefined): boolean {
     .map((url) => url.trim().replace(/\/+$/, "").toLowerCase())
     .filter(Boolean);
 
-  const cleanOrigin = origin.trim().replace(/\/+$/, "").toLowerCase();
-
-  // Exact match with any allowed URL
   if (allowedList.includes(cleanOrigin)) return true;
-
-  // Allow localhost during dev
-  if (cleanOrigin.startsWith("http://localhost:") || cleanOrigin.startsWith("http://127.0.0.1:")) {
-    return true;
-  }
-
-  // Allow Cloudflare Pages subdomains if user configured base domain or *.pages.dev
-  if (cleanOrigin.endsWith(".pages.dev")) {
-    return true;
-  }
 
   return false;
 }
