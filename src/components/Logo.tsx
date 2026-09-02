@@ -9,6 +9,7 @@ interface LogoProps {
 
 export default function Logo({ onDark = false, className = "", height = 52 }: LogoProps) {
   if (onDark) {
+<<<<<<< HEAD
     // White rounded pill so logo colours stay true on dark backgrounds
     return (
       <div
@@ -20,6 +21,12 @@ export default function Logo({ onDark = false, className = "", height = 52 }: Lo
           boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
           display: "inline-flex",
         }}
+=======
+    return (
+      <div
+        className={`inline-flex items-center justify-center ${className}`}
+        style={{ backgroundColor: "#fff", borderRadius: "10px", padding: "6px 10px", boxShadow: "0 1px 4px rgba(0,0,0,0.15)" }}
+>>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
       >
         <img
           src={logoImg}
@@ -30,7 +37,12 @@ export default function Logo({ onDark = false, className = "", height = 52 }: Lo
     );
   }
 
+<<<<<<< HEAD
   // Light background — multiply removes the white JPEG bg
+=======
+  // On light backgrounds: multiply blend mode makes the white JPEG background disappear,
+  // leaving only the navy and gold content visible.
+>>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
   return (
     <img
       src={logoImg}

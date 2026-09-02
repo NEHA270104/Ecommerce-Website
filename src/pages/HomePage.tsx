@@ -10,32 +10,59 @@ function formatINR(n: number) {
 const HERO_SLIDES = [
   {
     id: 0,
+<<<<<<< HEAD
     image: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=1600&h=900&fit=crop&auto=format&q=90",
     tag: "New Saree Collection 2026",
     headline: ["Drape Yourself in", "Pure Elegance."],
     sub: "Handpicked silk, cotton and designer sarees — from Banarasi to Kanjivaram, for every occasion.",
     cta: "Explore Sarees",
     ctaLink: "/category/sarees",
+=======
+    image: "https://images.unsplash.com/photo-1597983073540-684a10b15ab1?w=1600&h=900&fit=crop&auto=format&q=90",
+    tag: "New Collection 2026",
+    headline: ["Style That Feels", "Like You."],
+    sub: "Discover stylish, comfortable and quality-focused fashion made for everyday confidence.",
+    cta: "Shop Collection",
+    ctaLink: "/shop",
+>>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
     accent: "#E6C76A",
   },
   {
     id: 1,
+<<<<<<< HEAD
     image: "https://images.unsplash.com/photo-1580708570642-2ac35ad8d678?w=1600&h=900&fit=crop&auto=format&q=90",
     tag: "Kurtis & Suits",
     headline: ["Effortless Grace,", "Every Day."],
     sub: "Anarkalis, straight kurtis and complete salwar sets — designed for the modern Indian woman.",
     cta: "Shop Kurtis",
     ctaLink: "/category/kurtis",
+=======
+    image: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=1600&h=900&fit=crop&auto=format&q=90",
+    tag: "Ethnic Elegance",
+    headline: ["Grace for Every", "Occasion."],
+    sub: "Festive-ready designs that celebrate the modern Indian woman.",
+    cta: "Explore Dresses",
+    ctaLink: "/category/dresses",
+>>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
     accent: "#E6C76A",
   },
   {
     id: 2,
+<<<<<<< HEAD
     image: "https://images.unsplash.com/photo-1597897569252-9df44c7de0db?w=1600&h=900&fit=crop&auto=format&q=90",
     tag: "Festive Collection",
     headline: ["Celebrate Every", "Moment in Style."],
     sub: "Party sarees, embroidered kurtis and bridal wear crafted for life's most beautiful occasions.",
     cta: "Shop Festive Sarees",
     ctaLink: "/category/party-sarees",
+=======
+    image: "https://images.unsplash.com/photo-1764740184986-ad5306463ae1?w=1600&h=900&fit=crop&auto=format&q=90",
+    tag: "Everyday Comfort",
+    headline: ["Effortless Style,", "Every Day."],
+    sub: "Kurtis and tops designed for comfort, confidence, and everyday wear.",
+    cta: "Shop Tops & Kurtis",
+    ctaLink: "/category/tops-kurtis",
+>>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
     accent: "#E6C76A",
   },
 ];
@@ -487,10 +514,17 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
+<<<<<<< HEAD
               { label: "Silk Sarees from", price: 2799, to: "/category/silk-sarees" },
               { label: "Cotton Sarees from", price: 1299, to: "/category/cotton-sarees" },
               { label: "Kurtis from", price: 799, to: "/category/straight-kurtis" },
               { label: "Salwar Suits from", price: 1899, to: "/category/salwar-suits" },
+=======
+              { label: "Kurtis from", price: 799, to: "/category/tops-kurtis" },
+              { label: "Dresses from", price: 1499, to: "/category/dresses" },
+              { label: "Bottom Wear from", price: 999, to: "/category/bottom-wear" },
+              { label: "Accessories from", price: 449, to: "/category/accessories" },
+>>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
             ].map((item) => (
               <Link
                 key={item.label}

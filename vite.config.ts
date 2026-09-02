@@ -4,7 +4,10 @@ import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
 
 import siteConfiguration from './.figma/make/site.json'
+<<<<<<< HEAD
 import { apiServerPlugin } from './server/vitePlugin.ts'
+=======
+>>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
 
 // Vite config — https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -24,7 +27,10 @@ export default defineConfig(({ mode }) => {
       figmaErrorOverlayReplay(),
       figmaReactRefreshBoundaryFallback(),
       figmaMakeKitPlugin({ storiesGlob: '/src/**/*.stories.{ts,tsx,js,jsx}' }),
+<<<<<<< HEAD
       apiServerPlugin(),
+=======
+>>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
     ],
     resolve: {
       alias: {

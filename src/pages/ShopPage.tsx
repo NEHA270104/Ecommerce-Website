@@ -1,8 +1,16 @@
 import { useState, useMemo } from "react";
+<<<<<<< HEAD
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import Breadcrumb from "../components/Breadcrumb";
 import { useStore, useCategoryTree } from "../context/StoreContext";
+=======
+import { useParams, useSearchParams } from "react-router-dom";
+import ProductCard from "../components/ProductCard";
+import Breadcrumb from "../components/Breadcrumb";
+import { useStore, useCategoryTree } from "../context/StoreContext";
+import { getCategoryBySlug } from "../data/categories";
+>>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
 
 const ALL_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "One Size"];
 const ALL_COLORS = [
@@ -24,6 +32,7 @@ export default function ShopPage() {
   const { slug } = useParams<{ slug?: string }>();
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get("q") || "";
+<<<<<<< HEAD
   const { products, categories } = useStore();
   const categoryTree = useCategoryTree();
 
@@ -38,6 +47,12 @@ export default function ShopPage() {
     const childSlugs = categories.filter((c) => c.parentId === cat.id).map((c) => c.slug);
     return [slug, ...childSlugs];
   }, [slug, categories]);
+=======
+  const { products } = useStore();
+  useCategoryTree(); // keep import used
+
+  const category = slug ? getCategoryBySlug(slug) : null;
+>>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
 
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
@@ -53,7 +68,11 @@ export default function ShopPage() {
 
   const filtered = useMemo(() => {
     let list = products.filter((p) => !p.isArchived);
+<<<<<<< HEAD
     if (matchingSlugs) list = list.filter((p) => matchingSlugs.includes(p.categorySlug));
+=======
+    if (slug) list = list.filter((p) => p.categorySlug === slug || p.category.toLowerCase().replace(/ &/g, "").replace(/ /g, "-") === slug);
+>>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       list = list.filter((p) =>
@@ -65,24 +84,40 @@ export default function ShopPage() {
     if (selectedSizes.length) list = list.filter((p) => selectedSizes.some((s) => p.sizes.includes(s)));
     if (selectedColors.length) list = list.filter((p) => selectedColors.some((c) => p.colors.some((pc) => pc.name === c)));
     list = list.filter((p) => p.price >= priceRange[0] && p.price <= priceRange[1]);
+<<<<<<< HEAD
     if (sort === "price-asc") list = [...list].sort((a, b) => a.price - b.price);
     else if (sort === "price-desc") list = [...list].sort((a, b) => b.price - a.price);
     return list;
   }, [matchingSlugs, searchQuery, selectedSizes, selectedColors, priceRange, sort, products]);
+=======
+    if (sort === "price-asc") list.sort((a, b) => a.price - b.price);
+    else if (sort === "price-desc") list.sort((a, b) => b.price - a.price);
+    return list;
+  }, [slug, searchQuery, selectedSizes, selectedColors, priceRange, sort]);
+>>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
 
   const breadcrumbItems = [
     { label: "Home", to: "/" },
     { label: "Shop", to: "/shop" },
+<<<<<<< HEAD
     ...(activeCategory ? [{ label: activeCategory.name }] : []),
+=======
+    ...(category ? [{ label: category.name }] : []),
+>>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
   ];
 
   const FilterPanel = () => (
     <aside className="space-y-7">
+<<<<<<< HEAD
       {/* Category tree */}
+=======
+      {/* Category */}
+>>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
       <div>
         <h3 style={{ fontFamily: "'Manrope', sans-serif", color: "#0B1736", fontSize: "0.7rem", letterSpacing: "0.18em" }} className="font-bold uppercase mb-3">
           Category
         </h3>
+<<<<<<< HEAD
         <div className="flex flex-col gap-0.5">
           {/* All Products */}
           <Link
@@ -133,6 +168,31 @@ export default function ShopPage() {
                 </Link>
               ))}
             </div>
+=======
+        <div className="flex flex-col gap-1.5">
+          {[
+            { label: "All Products", slug: undefined },
+            { label: "Women", slug: "women" },
+            { label: "Dresses", slug: "dresses" },
+            { label: "Tops & Kurtis", slug: "tops-kurtis" },
+            { label: "Bottom Wear", slug: "bottom-wear" },
+            { label: "Accessories", slug: "accessories" },
+          ].map((cat) => (
+            <a
+              key={cat.label}
+              href={cat.slug ? `/category/${cat.slug}` : "/shop"}
+              style={{
+                fontFamily: "'Manrope', sans-serif",
+                color: slug === cat.slug ? "#C99724" : "#4B5563",
+                fontWeight: slug === cat.slug ? 700 : 400,
+                fontSize: "0.875rem",
+                textDecoration: "none",
+              }}
+              className="hover:text-[#C99724] transition-colors"
+            >
+              {cat.label}
+            </a>
+>>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
           ))}
         </div>
       </div>
@@ -223,7 +283,11 @@ export default function ShopPage() {
         />
       </div>
 
+<<<<<<< HEAD
       {(selectedSizes.length > 0 || selectedColors.length > 0 || priceRange[1] < 5000) ? (
+=======
+      {(selectedSizes.length || selectedColors.length || priceRange[1] < 5000) ? (
+>>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
         <button
           onClick={() => { setSelectedSizes([]); setSelectedColors([]); setPriceRange([0, 5000]); }}
           style={{ color: "#DC2626", fontFamily: "'Manrope', sans-serif", fontSize: "0.8rem" }}
@@ -235,6 +299,7 @@ export default function ShopPage() {
     </aside>
   );
 
+<<<<<<< HEAD
   const pageTitle = activeCategory
     ? activeCategory.name
     : searchQuery
@@ -267,11 +332,16 @@ export default function ShopPage() {
         </div>
       )}
 
+=======
+  return (
+    <main className="min-h-screen" style={{ backgroundColor: "#FAF9F6" }}>
+>>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
         <Breadcrumb items={breadcrumbItems} />
 
         <div className="flex items-end justify-between mt-6 mb-8">
           <div>
+<<<<<<< HEAD
             {!activeCategory?.image && (
               <h1 style={{ fontFamily: "'Playfair Display', serif", color: "#0B1736", fontSize: "clamp(1.6rem, 3vw, 2.2rem)" }} className="font-semibold">
                 {pageTitle}
@@ -279,6 +349,15 @@ export default function ShopPage() {
             )}
             {!activeCategory?.image && (
               <p style={{ color: "#6B7280", fontFamily: "'Manrope', sans-serif" }} className="mt-1 text-sm">{pageDesc}</p>
+=======
+            <h1 style={{ fontFamily: "'Playfair Display', serif", color: "#0B1736", fontSize: "clamp(1.6rem, 3vw, 2.2rem)" }} className="font-semibold">
+              {category ? category.name : searchQuery ? `Results for "${searchQuery}"` : "Shop"}
+            </h1>
+            {category && (
+              <p style={{ color: "#6B7280", fontFamily: "'Manrope', sans-serif" }} className="mt-1 text-sm">
+                {category.description}
+              </p>
+>>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
             )}
           </div>
           <div className="flex items-center gap-3">
@@ -347,6 +426,7 @@ export default function ShopPage() {
                   <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <p style={{ fontFamily: "'Playfair Display', serif", color: "#6B7280", fontSize: "1.2rem" }}>No products found.</p>
+<<<<<<< HEAD
                 <p style={{ color: "#9CA3AF", fontFamily: "'Manrope', sans-serif" }} className="mt-2 text-sm">Try adjusting your filters or browse a different category.</p>
                 <Link
                   to="/shop"
@@ -355,6 +435,9 @@ export default function ShopPage() {
                 >
                   View All Products →
                 </Link>
+=======
+                <p style={{ color: "#9CA3AF", fontFamily: "'Manrope', sans-serif" }} className="mt-2 text-sm">We couldn't find products matching your filters.</p>
+>>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-5">

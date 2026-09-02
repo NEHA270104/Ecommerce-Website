@@ -19,8 +19,11 @@ import ReturnPolicyPage from "./pages/ReturnPolicyPage";
 import SignInPage from "./pages/auth/SignInPage";
 import SignUpPage from "./pages/auth/SignUpPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
+<<<<<<< HEAD
 import AdminLoginPage from "./pages/auth/AdminLoginPage";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
+=======
+>>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
 
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -61,14 +64,19 @@ export default function App() {
             <Route path="/contact" element={<StorefrontLayout><ContactPage /></StorefrontLayout>} />
             <Route path="/returns" element={<StorefrontLayout><ReturnPolicyPage /></StorefrontLayout>} />
 
+<<<<<<< HEAD
             {/* Admin Login */}
             <Route path="/login" element={<AdminLoginPage />} />
 
             {/* Customer Auth */}
+=======
+            {/* Auth (no header/footer) */}
+>>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
             <Route path="/auth/sign-in" element={<SignInPage />} />
             <Route path="/auth/sign-up" element={<SignUpPage />} />
             <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
 
+<<<<<<< HEAD
             {/* Admin (Protected) */}
             <Route
               path="/admin"
@@ -78,6 +86,10 @@ export default function App() {
                 </AdminProtectedRoute>
               }
             >
+=======
+            {/* Admin */}
+            <Route path="/admin" element={<AdminLayout />}>
+>>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
               <Route index element={<AdminDashboard />} />
               <Route path="orders" element={<AdminOrders />} />
               <Route path="products" element={<AdminProducts />} />
