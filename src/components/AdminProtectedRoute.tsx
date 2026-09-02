@@ -17,9 +17,6 @@ export default function AdminProtectedRoute({ children }: { children?: React.Rea
       try {
         const res = await apiFetch("/api/auth/me", {
           method: "GET",
-          headers: {
-            "Cache-Control": "no-cache",
-          },
         });
 
         if (res.ok) {
