@@ -1,7 +1,4 @@
-<<<<<<< HEAD
 import { Link } from "react-router-dom";
-=======
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
 import { useStore } from "../../context/StoreContext";
 
 const statusColors: Record<string, { bg: string; text: string }> = {
@@ -54,11 +51,7 @@ export default function AdminDashboard() {
       <div style={{ backgroundColor: "#fff", border: "1px solid #E5E7EB", borderRadius: "16px" }} className="mb-8">
         <div className="flex items-center justify-between p-5 pb-0">
           <h2 style={{ fontFamily: "'Manrope', sans-serif", color: "#111827", fontWeight: 700, fontSize: "0.95rem" }}>Recent Orders</h2>
-<<<<<<< HEAD
           <Link to="/admin/orders" style={{ color: "#C99724", fontFamily: "'Manrope', sans-serif", fontSize: "0.8rem", fontWeight: 600 }}>View All →</Link>
-=======
-          <a href="/admin/orders" style={{ color: "#C99724", fontFamily: "'Manrope', sans-serif", fontSize: "0.8rem", fontWeight: 600 }}>View All →</a>
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
         </div>
         <div className="overflow-x-auto">
           {recentOrders.length === 0 ? (

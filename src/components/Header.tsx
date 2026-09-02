@@ -1,9 +1,5 @@
 import { useState, useEffect } from "react";
-<<<<<<< HEAD
 import { Link, useLocation, useNavigate } from "react-router-dom";
-=======
-import { Link, useLocation } from "react-router-dom";
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHouse,
@@ -16,10 +12,7 @@ import {
   faBars,
   faXmark,
   faRightToBracket,
-<<<<<<< HEAD
   faStar,
-=======
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
 } from "@fortawesome/free-solid-svg-icons";
 import Logo from "./Logo";
 import { useCart } from "../context/CartContext";
@@ -28,14 +21,9 @@ import AnnouncementBar from "./AnnouncementBar";
 
 const navLinks = [
   { label: "Home", to: "/", icon: faHouse },
-<<<<<<< HEAD
   { label: "Sarees", to: "/category/sarees", icon: faStar },
   { label: "Kurtis & Suits", to: "/category/kurtis", icon: faShirt },
   { label: "Shop All", to: "/shop", icon: faLayerGroup },
-=======
-  { label: "Shop", to: "/shop", icon: faShirt },
-  { label: "Categories", to: "/categories", icon: faLayerGroup },
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
   { label: "About Us", to: "/about", icon: faCircleInfo },
 ];
 
@@ -47,10 +35,7 @@ export default function Header() {
   const { totalItems } = useCart();
   const { isAuthenticated } = useAuth();
   const location = useLocation();
-<<<<<<< HEAD
   const navigate = useNavigate();
-=======
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 8);
@@ -63,16 +48,11 @@ export default function Header() {
     setSearchOpen(false);
   }, [location.pathname]);
 
-<<<<<<< HEAD
   const isActive = (to: string) => {
     if (to === "/") return location.pathname === "/";
     if (to === "/shop") return location.pathname === "/shop";
     return location.pathname.startsWith(to);
   };
-=======
-  const isActive = (to: string) =>
-    to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
 
   return (
     <header className="sticky top-0 z-50 w-full">
@@ -189,7 +169,6 @@ export default function Header() {
                 )}
               </Link>
 
-<<<<<<< HEAD
               {/* Login link */}
               <Link
                 to="/login"
@@ -197,15 +176,6 @@ export default function Header() {
                 style={{ color: "#374151", fontFamily: "'Manrope', sans-serif", fontSize: "0.825rem", fontWeight: 600, textDecoration: "none" }}
               >
                 Login
-=======
-              {/* Admin shortcut (desktop only) */}
-              <Link
-                to="/admin"
-                className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-lg ml-1 transition-colors hover:bg-gray-100"
-                style={{ color: "#9CA3AF", fontFamily: "'Manrope', sans-serif", fontSize: "0.75rem", fontWeight: 600 }}
-              >
-                Admin
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
               </Link>
             </div>
           </div>
@@ -217,13 +187,9 @@ export default function Header() {
                 onSubmit={(e) => {
                   e.preventDefault();
                   if (searchQuery.trim()) {
-<<<<<<< HEAD
                     navigate(`/shop?q=${encodeURIComponent(searchQuery.trim())}`);
                     setSearchOpen(false);
                     setSearchQuery("");
-=======
-                    window.location.href = `/shop?q=${encodeURIComponent(searchQuery.trim())}`;
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
                   }
                 }}
                 className="flex items-center gap-2 max-w-md mx-auto"
@@ -308,21 +274,12 @@ export default function Header() {
                 {isAuthenticated ? "My Account" : "Sign In"}
               </Link>
               <Link
-<<<<<<< HEAD
                 to="/login"
                 style={{
                   fontFamily: "'Manrope', sans-serif",
                   color: "#374151",
                   fontWeight: 500,
                   fontSize: "0.95rem",
-=======
-                to="/admin"
-                style={{
-                  fontFamily: "'Manrope', sans-serif",
-                  color: "#9CA3AF",
-                  fontWeight: 500,
-                  fontSize: "0.85rem",
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
                   display: "flex",
                   alignItems: "center",
                   gap: "12px",
@@ -330,13 +287,8 @@ export default function Header() {
                   textDecoration: "none",
                 }}
               >
-<<<<<<< HEAD
                 <FontAwesomeIcon icon={faRightToBracket} style={{ width: "16px", color: "#9CA3AF" }} />
                 Login
-=======
-                <FontAwesomeIcon icon={faLayerGroup} style={{ width: "16px" }} />
-                Admin Panel
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
               </Link>
             </nav>
           </div>

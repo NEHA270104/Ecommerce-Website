@@ -2,12 +2,9 @@ node_modules/
 dist/
 build/
 .cache/
-<<<<<<< HEAD
 .env
 .env.local
 .env.*.local
-=======
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
 .env*
 .vite/
 vite.config.*.timestamp-*

@@ -1,9 +1,5 @@
 import { useState } from "react";
-<<<<<<< HEAD
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
-=======
-import { Link, useLocation, Outlet } from "react-router-dom";
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faGauge,
@@ -32,7 +28,6 @@ const SIDEBAR_W = 240;
 
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-<<<<<<< HEAD
   const [loggingOut, setLoggingOut] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -50,9 +45,6 @@ export default function AdminLayout() {
       navigate("/login", { replace: true });
     }
   };
-=======
-  const location = useLocation();
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
 
   const isActive = (to: string, exact = false) =>
     exact ? location.pathname === to : location.pathname.startsWith(to);
@@ -209,11 +201,8 @@ export default function AdminLayout() {
             View Storefront
           </Link>
           <button
-<<<<<<< HEAD
             onClick={handleLogout}
             disabled={loggingOut}
-=======
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
             style={{
               display: "flex",
               alignItems: "center",
@@ -225,11 +214,7 @@ export default function AdminLayout() {
               color: "#6B7280",
               background: "none",
               border: "none",
-<<<<<<< HEAD
               cursor: loggingOut ? "not-allowed" : "pointer",
-=======
-              cursor: "pointer",
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
               width: "100%",
               textAlign: "left",
               transition: "color 0.15s",
@@ -237,11 +222,7 @@ export default function AdminLayout() {
             className="hover:text-gray-300"
           >
             <FontAwesomeIcon icon={faRightFromBracket} style={{ width: "13px", opacity: 0.7 }} />
-<<<<<<< HEAD
             {loggingOut ? "Signing Out..." : "Sign Out"}
-=======
-            Sign Out
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
           </button>
         </div>
       </aside>
@@ -345,7 +326,6 @@ export default function AdminLayout() {
                 Admin
               </span>
             </div>
-<<<<<<< HEAD
             <button
               onClick={handleLogout}
               disabled={loggingOut}
@@ -369,8 +349,6 @@ export default function AdminLayout() {
               <FontAwesomeIcon icon={faRightFromBracket} style={{ fontSize: "0.75rem" }} />
               <span className="hidden sm:inline">{loggingOut ? "Signing Out..." : "Sign Out"}</span>
             </button>
-=======
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
           </div>
         </header>
 

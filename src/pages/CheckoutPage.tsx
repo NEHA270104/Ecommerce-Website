@@ -50,7 +50,6 @@ export default function CheckoutPage() {
     return null;
   }
 
-<<<<<<< HEAD
   const [errors, setErrors] = useState<Partial<Record<keyof ShippingData, string>>>({});
 
   const update = (field: keyof ShippingData, value: string) => {
@@ -72,10 +71,6 @@ export default function CheckoutPage() {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-=======
-  const update = (field: keyof ShippingData, value: string) =>
-    setFormData((f) => ({ ...f, [field]: value }));
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
 
   const address = useExisting && defaultAddress
     ? {
@@ -126,17 +121,10 @@ export default function CheckoutPage() {
         value={formData[field]}
         onChange={(e) => update(field, e.target.value)}
         placeholder={placeholder}
-<<<<<<< HEAD
         style={{ fontFamily: "'Manrope', sans-serif", borderColor: errors[field] ? "#DC2626" : "#E5E7EB", fontSize: "0.875rem" }}
         className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:border-[#C99724] bg-white"
       />
       {errors[field] && <p style={{ color: "#DC2626", fontFamily: "'Manrope', sans-serif", fontSize: "0.72rem" }} className="mt-1">{errors[field]}</p>}
-=======
-        required={required}
-        style={{ fontFamily: "'Manrope', sans-serif", borderColor: "#E5E7EB", fontSize: "0.875rem" }}
-        className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:border-[#C99724] bg-white"
-      />
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
     </div>
   );
 
@@ -222,11 +210,7 @@ export default function CheckoutPage() {
                 )}
 
                 <button
-<<<<<<< HEAD
                   onClick={() => { if (validateStep1()) setStep(2); }}
-=======
-                  onClick={() => setStep(2)}
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
                   style={{ backgroundColor: "#0B1736", color: "#FAF9F6", fontFamily: "'Manrope', sans-serif" }}
                   className="mt-6 w-full sm:w-auto px-8 py-3 rounded-full text-sm font-semibold hover:bg-[#152459] transition-colors"
                 >

@@ -11,11 +11,7 @@ export default function AdminCategories() {
 
   const [showForm, setShowForm] = useState(false);
   const [editCat, setEditCat] = useState<Category | null>(null);
-<<<<<<< HEAD
   const [form, setForm] = useState({ name: "", slug: "", description: "", imageUrl: "", parentId: "" as string | null, sortOrder: "1", isActive: true });
-=======
-  const [form, setForm] = useState({ name: "", slug: "", parentId: "" as string | null, sortOrder: "1", isActive: true });
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
   const [toast, setToast] = useState<string | null>(null);
 
   const topLevel = categories.filter((c) => c.parentId === null).sort((a, b) => a.sortOrder - b.sortOrder);
@@ -24,21 +20,13 @@ export default function AdminCategories() {
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
 
   const openAdd = () => {
-<<<<<<< HEAD
     setForm({ name: "", slug: "", description: "", imageUrl: "", parentId: null, sortOrder: "1", isActive: true });
-=======
-    setForm({ name: "", slug: "", parentId: null, sortOrder: "1", isActive: true });
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
     setEditCat(null);
     setShowForm(true);
   };
 
   const openEdit = (cat: Category) => {
-<<<<<<< HEAD
     setForm({ name: cat.name, slug: cat.slug, description: cat.description, imageUrl: cat.image, parentId: cat.parentId, sortOrder: String(cat.sortOrder), isActive: cat.isActive });
-=======
-    setForm({ name: cat.name, slug: cat.slug, parentId: cat.parentId, sortOrder: String(cat.sortOrder), isActive: cat.isActive });
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
     setEditCat(cat);
     setShowForm(true);
   };
@@ -46,36 +34,19 @@ export default function AdminCategories() {
   const handleSave = () => {
     if (!form.name.trim()) return;
     const slug = form.slug || toSlug(form.name);
-<<<<<<< HEAD
     const image = form.imageUrl.trim() || "https://images.unsplash.com/photo-1716504628204-47f2df8d2634?w=600&h=750&fit=crop&auto=format";
     if (editCat) {
       updateCategory(editCat.id, {
         name: form.name, slug, description: form.description,
         parentId: form.parentId ?? null, sortOrder: Number(form.sortOrder),
         isActive: form.isActive, image,
-=======
-    if (editCat) {
-      updateCategory(editCat.id, {
-        name: form.name, slug, parentId: form.parentId ?? null,
-        sortOrder: Number(form.sortOrder), isActive: form.isActive,
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
       });
       showToast("Category updated.");
     } else {
       addCategory({
-<<<<<<< HEAD
         slug, name: form.name, description: form.description,
         parentId: form.parentId ?? null, sortOrder: Number(form.sortOrder),
         isActive: form.isActive, image,
-=======
-        slug,
-        name: form.name,
-        description: "",
-        parentId: form.parentId ?? null,
-        sortOrder: Number(form.sortOrder),
-        isActive: form.isActive,
-        image: "https://images.unsplash.com/photo-1598451837400-19b80d53a4a6?w=600&h=750&fit=crop&auto=format",
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
       });
       showToast("Category created.");
     }
@@ -186,13 +157,9 @@ export default function AdminCategories() {
             <div className="p-6 space-y-4">
               {[
                 { label: "Category Name *", field: "name", placeholder: "e.g. Sarees" },
-<<<<<<< HEAD
                 { label: "Slug (URL)", field: "slug", placeholder: "auto-generated from name" },
                 { label: "Description", field: "description", placeholder: "Short description for storefront" },
                 { label: "Image URL", field: "imageUrl", placeholder: "https://images.unsplash.com/…" },
-=======
-                { label: "Slug (URL)", field: "slug", placeholder: "auto-generated" },
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
                 { label: "Sort Order", field: "sortOrder", placeholder: "1" },
               ].map(({ label, field, placeholder }) => (
                 <div key={field}>
@@ -201,7 +168,6 @@ export default function AdminCategories() {
                     type="text"
                     placeholder={placeholder}
                     value={form[field as keyof typeof form] as string}
-<<<<<<< HEAD
                     onChange={(e) => setForm({ ...form, [field]: field === "name" && !form.slug ? { ...form, name: e.target.value, slug: "" }[field] : e.target.value })}
                     style={{ fontFamily: "'Manrope', sans-serif", borderColor: "#E5E7EB", fontSize: "0.875rem" }}
                     className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:border-[#C99724] bg-white"
@@ -209,12 +175,6 @@ export default function AdminCategories() {
                   {field === "imageUrl" && form.imageUrl && (
                     <img src={form.imageUrl} alt="preview" style={{ width: "56px", height: "72px", objectFit: "cover", borderRadius: "6px", marginTop: "6px", backgroundColor: "#F3F4F6" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                   )}
-=======
-                    onChange={(e) => setForm({ ...form, [field]: e.target.value })}
-                    style={{ fontFamily: "'Manrope', sans-serif", borderColor: "#E5E7EB", fontSize: "0.875rem" }}
-                    className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:border-[#C99724] bg-white"
-                  />
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
                 </div>
               ))}
               <div>

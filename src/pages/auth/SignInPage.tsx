@@ -4,13 +4,8 @@ import { useAuth } from "../../context/AuthContext";
 import Logo from "../../components/Logo";
 
 export default function SignInPage() {
-<<<<<<< HEAD
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-=======
-  const [email, setEmail] = useState("priya@example.com");
-  const [password, setPassword] = useState("password");
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
   const [error, setError] = useState("");
   const { signIn } = useAuth();
   const navigate = useNavigate();
@@ -22,11 +17,7 @@ export default function SignInPage() {
     if (success) {
       navigate("/account");
     } else {
-<<<<<<< HEAD
       setError("Invalid email or password.");
-=======
-      setError("Invalid email or password. Try priya@example.com / password");
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
     }
   };
 

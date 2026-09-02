@@ -63,15 +63,9 @@ interface StoreContextType {
 
 const StoreContext = createContext<StoreContextType | null>(null);
 
-<<<<<<< HEAD
 const LS_PRODUCTS = "vv_products_v4";
 const LS_CATEGORIES = "vv_categories_v4";
 const LS_ORDERS = "vv_orders_v4";
-=======
-const LS_PRODUCTS = "vv_products_v3";
-const LS_CATEGORIES = "vv_categories_v3";
-const LS_ORDERS = "vv_orders_v3";
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
 
 function loadOrSeed<T>(key: string, seed: T[]): T[] {
   try {

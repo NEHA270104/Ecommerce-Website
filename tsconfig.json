@@ -19,9 +19,5 @@
     "strict": true,
     "noFallthroughCasesInSwitch": true
   },
-<<<<<<< HEAD
   "include": ["src", "vite.config.ts", "server", "lib", "scripts", "netlify"]
-=======
-  "include": ["src", "vite.config.ts"]
->>>>>>> 33e34ecccfadbe883a95e5eadb5e30279ace7d15
 }
