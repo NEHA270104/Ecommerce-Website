@@ -52,8 +52,8 @@ export default function ContactPage() {
                     </svg>
                   ),
                   label: "Phone / WhatsApp",
-                  value: "7753034659",
-                  link: "tel:7753034659",
+                  value: "8447158710",
+                  link: "tel:8447158710",
                 },
               ].map((item) => (
                 <div key={item.label} className="flex items-start gap-4">
@@ -80,7 +80,7 @@ export default function ContactPage() {
 
             {/* WhatsApp CTA */}
             <a
-              href="https://wa.me/917753034659"
+              href="https://wa.me/918447158710"
               target="_blank"
               rel="noopener noreferrer"
               style={{ backgroundColor: "#25D366", color: "#fff", fontFamily: "'Manrope', sans-serif" }}

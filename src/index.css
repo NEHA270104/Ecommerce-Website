@@ -52,3 +52,9 @@ a, button { transition: all 0.2s ease; }
 
 /* Price formatting */
 .price { font-variant-numeric: tabular-nums; }
+
+/* Spinner for image upload loading state */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

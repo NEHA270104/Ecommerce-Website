@@ -2,25 +2,19 @@
  * Centralized API client for Vrishabhanvi Ventures.
  *
  * In local development:
- *   VITE_API_URL is empty -> requests use relative paths (e.g., "/api/auth/login")
+ *   Requests use same-origin relative paths (e.g., "/api/auth/login")
  *   which are handled by the local Vite dev server middleware.
  *
- * In production (Cloudflare Pages):
- *   VITE_API_URL is set to the Render backend URL (e.g., "https://vrishabhanvi-api.onrender.com")
- *   so requests are sent directly to the Render backend API.
+ * In production (Netlify + Cloudflare):
+ *   Requests use same-origin relative paths (e.g., "/api/auth/login")
+ *   proxied by netlify.toml to Netlify serverless functions.
+ *   VITE_API_URL can be set if an external API gateway is configured.
  *
  * All authenticated requests rely strictly on secure HttpOnly cookies (credentials: "include").
  * No tokens are stored in localStorage or sessionStorage.
  */
 
-const RAW_API_URL =
-  import.meta.env.VITE_API_URL ||
-  (typeof window !== "undefined" &&
-   (window.location.hostname === "vrishabhanvi.com" ||
-    window.location.hostname.endsWith(".vrishabhanvi.com") ||
-    window.location.hostname.endsWith(".pages.dev"))
-    ? "https://ecommerce-website-guzm.onrender.com"
-    : "");
+const RAW_API_URL = (import.meta.env.VITE_API_URL as string | undefined) || "";
 export const API_BASE_URL = RAW_API_URL.replace(/\/+$/, "");
 
 export function apiUrl(path: string): string {

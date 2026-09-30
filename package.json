@@ -11,7 +11,9 @@
     "start": "node dist-server/server.js",
     "preview": "vite preview",
     "format": "oxfmt",
-    "seed:admin": "tsx scripts/create-admin.ts"
+    "seed:admin": "tsx scripts/create-admin.ts",
+    "verify-build": "node scripts/verify-build.js",
+    "test:security": "tsx scripts/test-security.js"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.3.1",

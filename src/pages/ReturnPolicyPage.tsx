@@ -22,7 +22,7 @@ const sections = [
   {
     number: "3",
     title: "Damaged or Incorrect Product",
-    content: "If you receive a damaged, defective, or incorrect product, contact us as soon as possible at 7753034659. Please provide your order number and clear photographs or videos showing the issue.",
+    content: "If you receive a damaged, defective, or incorrect product, contact us as soon as possible at 8447158710. Please provide your order number and clear photographs or videos showing the issue.",
   },
   {
     number: "4",
@@ -128,11 +128,11 @@ export default function ReturnPolicyPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center mt-5">
             <a
-              href="tel:7753034659"
+              href="tel:8447158710"
               style={{ backgroundColor: "#C99724", color: "#0B1736", fontFamily: "'Manrope', sans-serif" }}
               className="px-7 py-3 rounded-full text-sm font-bold"
             >
-              Call: 7753034659
+              Call: 8447158710
             </a>
             <Link
               to="/contact"

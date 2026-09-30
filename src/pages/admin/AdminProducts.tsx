@@ -120,6 +120,11 @@ export default function AdminProducts() {
   const [importDragging, setImportDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // ── Image upload state ─────────────────────────────────────────────────────
+  const imageUploadRef = useRef<HTMLInputElement>(null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState<string | null>(null);
+
   const liveCategories = categories.filter((c) => c.isActive);
   const topLevelCats = liveCategories.filter((c) => c.parentId === null);
 
@@ -134,7 +139,7 @@ export default function AdminProducts() {
   // ── Single add/edit ───────────────────────────────────────────────────────
   const openAdd = () => {
     setForm(BLANK_FORM); setVariants([]); setShowVForm(false);
-    setEditVKey(null); setEditId(null); setModalMode("add");
+    setEditVKey(null); setEditId(null); setImageUploadError(null); setModalMode("add");
   };
   const openEdit = (p: Product) => {
     setForm({
@@ -146,7 +151,34 @@ export default function AdminProducts() {
     setVariants(p.variants.map((v) => ({ ...v, _key: v.sku + Math.random() })));
     setShowVForm(false); setEditVKey(null); setEditId(p.id); setModalMode("edit");
   };
-  const closeModal = () => { setModalMode(null); setEditId(null); };
+  const closeModal = () => { setModalMode(null); setEditId(null); setImageUploadError(null); };
+
+  // ── Image file upload (local → data URL) ──────────────────────────────────
+  const handleImageUpload = (file: File) => {
+    setImageUploadError(null);
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"];
+    if (!allowedTypes.includes(file.type)) {
+      setImageUploadError("Unsupported file type. Use JPG, PNG, WebP, GIF, or AVIF.");
+      return;
+    }
+    const maxBytes = 5 * 1024 * 1024; // 5 MB
+    if (file.size > maxBytes) {
+      setImageUploadError("File too large. Maximum size is 5 MB.");
+      return;
+    }
+    setImageUploading(true);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      setForm((prev) => ({ ...prev, imageUrl: dataUrl }));
+      setImageUploading(false);
+    };
+    reader.onerror = () => {
+      setImageUploadError("Failed to read the file. Please try again.");
+      setImageUploading(false);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleSave = () => {
     if (!form.name.trim() || !form.price) return;
@@ -554,9 +586,87 @@ export default function AdminProducts() {
                     </select>
                   </div>
                   <div>
-                    <label className={label}>Image URL (primary)</label>
-                    <input className={input} style={{ borderColor: "#E5E7EB" }} value={form.imageUrl}
-                      onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} placeholder="https://…" />
+                    <label className={label}>Product Image</label>
+                    {/* Hidden file input */}
+                    <input
+                      ref={imageUploadRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                      style={{ display: "none" }}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file);
+                        e.target.value = "";
+                      }}
+                    />
+                    {form.imageUrl ? (
+                      /* Preview + replace/remove row */
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 12px", border: "1px solid #E5E7EB", borderRadius: "8px", backgroundColor: "#F9FAFB" }}>
+                        <img
+                          src={form.imageUrl}
+                          alt="Product preview"
+                          style={{ width: "56px", height: "72px", objectFit: "cover", borderRadius: "6px", backgroundColor: "#E5E7EB", flexShrink: 0 }}
+                          onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.3"; }}
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: "0.75rem", color: "#374151", fontWeight: 600, marginBottom: "2px" }}>Image selected</p>
+                          {form.imageUrl.startsWith("data:") ? (
+                            <p style={{ fontSize: "0.68rem", color: "#9CA3AF" }}>Local file (stored as data URL)</p>
+                          ) : (
+                            <p style={{ fontSize: "0.68rem", color: "#9CA3AF", wordBreak: "break-all", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "200px" }}>{form.imageUrl}</p>
+                          )}
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "6px", flexShrink: 0 }}>
+                          <button
+                            type="button"
+                            onClick={() => imageUploadRef.current?.click()}
+                            style={{ fontSize: "0.72rem", color: "#C99724", fontWeight: 600, border: "1px solid #E6C76A", borderRadius: "6px", padding: "4px 10px", backgroundColor: "#fff" }}
+                          >
+                            Replace
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setForm((prev) => ({ ...prev, imageUrl: "" })); setImageUploadError(null); }}
+                            style={{ fontSize: "0.72rem", color: "#DC2626", border: "1px solid #FCA5A5", borderRadius: "6px", padding: "4px 10px", backgroundColor: "#fff" }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      /* Upload / drop zone */
+                      <button
+                        type="button"
+                        onClick={() => imageUploadRef.current?.click()}
+                        disabled={imageUploading}
+                        style={{
+                          width: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                          gap: "8px", padding: "20px 12px", border: "2px dashed #E5E7EB", borderRadius: "8px",
+                          backgroundColor: "#F9FAFB", cursor: imageUploading ? "wait" : "pointer", transition: "border-color 0.15s",
+                        }}
+                        className="hover:border-[#C99724]"
+                      >
+                        {imageUploading ? (
+                          <>
+                            <svg style={{ width: "24px", height: "24px", color: "#C99724", animation: "spin 1s linear infinite" }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                            </svg>
+                            <span style={{ fontSize: "0.78rem", color: "#6B7280" }}>Uploading…</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg style={{ width: "28px", height: "28px", color: "#9CA3AF" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                            </svg>
+                            <span style={{ fontSize: "0.78rem", color: "#374151", fontWeight: 600 }}>Click to upload image</span>
+                            <span style={{ fontSize: "0.68rem", color: "#9CA3AF" }}>JPG, PNG, WebP, GIF · max 5 MB</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                    {imageUploadError && (
+                      <p style={{ fontSize: "0.72rem", color: "#DC2626", marginTop: "6px" }}>{imageUploadError}</p>
+                    )}
                   </div>
                   <div className="sm:col-span-2">
                     <label className={label}>Short Description</label>

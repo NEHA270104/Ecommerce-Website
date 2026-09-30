@@ -49,7 +49,7 @@ export default function Footer() {
               {[
                 { icon: faInstagram, href: "https://instagram.com", label: "Instagram" },
                 { icon: faFacebook, href: "https://facebook.com", label: "Facebook" },
-                { icon: faWhatsapp, href: "https://wa.me/917753034659", label: "WhatsApp" },
+                { icon: faWhatsapp, href: "https://wa.me/918447158710", label: "WhatsApp" },
                 { icon: faYoutube, href: "https://youtube.com", label: "YouTube" },
               ].map((s) => (
                 <a
@@ -137,14 +137,14 @@ export default function Footer() {
             </h4>
             <div className="flex flex-col gap-4">
               <a
-                href="tel:7753034659"
+                href="tel:8447158710"
                 style={{ color: "#D1D5DB", fontFamily: "'Manrope', sans-serif", fontSize: "0.83rem", textDecoration: "none", display: "flex", alignItems: "flex-start", gap: "10px" }}
                 className="hover:text-white"
               >
                 <FontAwesomeIcon icon={faPhone} style={{ color: "#C99724", marginTop: "3px", flexShrink: 0 }} />
                 <div>
                   <p style={{ color: "#9CA3AF", fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "2px" }}>Phone / WhatsApp</p>
-                  <span>+91 77530 34659</span>
+                  <span>+91 8447158710</span>
                 </div>
               </a>
               <a
@@ -169,21 +169,123 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }} className="mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p style={{ color: "#4B5563", fontFamily: "'Manrope', sans-serif", fontSize: "0.75rem" }}>
-            © 2026 Vrishabhanvi Venture. All rights reserved.
-          </p>
-          <div className="flex items-center gap-4 flex-wrap justify-center">
-            {[
-              { label: "Return Policy", to: "/returns" },
-              { label: "Contact", to: "/contact" },
-              { label: "About", to: "/about" },
-            ].map((l) => (
-              <Link key={l.label} to={l.to} style={{ color: "#4B5563", fontFamily: "'Manrope', sans-serif", fontSize: "0.75rem", textDecoration: "none" }} className="hover:text-gray-400">
-                {l.label}
-              </Link>
-            ))}
+        {/* Bottom bar — three-column: left / center / right */}
+        <div
+          style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
+          className="mt-12 pt-6 pb-2"
+        >
+          {/* Desktop / tablet — 1fr | auto | 1fr grid so center is truly centered */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr auto 1fr",
+              alignItems: "center",
+              gap: "0.5rem 1rem",
+            }}
+            className="hidden sm:grid"
+          >
+            {/* LEFT — copyright */}
+            <p style={{ color: "#4B5563", fontFamily: "'Manrope', sans-serif", fontSize: "0.75rem", margin: 0 }}>
+              © 2026 Vrishabhanvi Venture. All rights reserved.
+            </p>
+
+            {/* CENTER — developer credit */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px" }}>
+              <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: "0.72rem", margin: 0, whiteSpace: "nowrap" }}>
+                <span style={{ color: "#4B5563", fontWeight: 400 }}>Built by </span>
+                <a
+                  href="https://brtneura.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "#9CA3AF", fontWeight: 600, textDecoration: "none", transition: "color 0.15s" }}
+                  className="hover:text-[#C99724]"
+                >
+                  BRTNeura Technologies
+                </a>
+              </p>
+              <p style={{
+                color: "#374151",
+                fontFamily: "'Manrope', sans-serif",
+                fontSize: "0.6rem",
+                fontWeight: 400,
+                letterSpacing: "0.09em",
+                margin: 0,
+                whiteSpace: "nowrap",
+              }}>
+                Governed&nbsp;•&nbsp;Auditable&nbsp;•&nbsp;Production-Ready
+              </p>
+            </div>
+
+            {/* RIGHT — legal links */}
+            <div className="flex items-center gap-4 flex-wrap justify-end">
+              {[
+                { label: "Return Policy", to: "/returns" },
+                { label: "Contact", to: "/contact" },
+                { label: "About", to: "/about" },
+              ].map((l) => (
+                <Link
+                  key={l.label}
+                  to={l.to}
+                  style={{ color: "#4B5563", fontFamily: "'Manrope', sans-serif", fontSize: "0.75rem", textDecoration: "none" }}
+                  className="hover:text-gray-400"
+                >
+                  {l.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Mobile — stacked, all centered */}
+          <div className="flex flex-col items-center gap-4 sm:hidden">
+            {/* Developer credit */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px" }}>
+              <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: "0.72rem", margin: 0, textAlign: "center" }}>
+                <span style={{ color: "#4B5563", fontWeight: 400 }}>Built by </span>
+                <a
+                  href="https://brtneura.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "#9CA3AF", fontWeight: 600, textDecoration: "none", transition: "color 0.15s" }}
+                  className="hover:text-[#C99724]"
+                >
+                  BRTNeura Technologies
+                </a>
+              </p>
+              <p style={{
+                color: "#374151",
+                fontFamily: "'Manrope', sans-serif",
+                fontSize: "0.6rem",
+                fontWeight: 400,
+                letterSpacing: "0.09em",
+                margin: 0,
+                textAlign: "center",
+              }}>
+                Governed&nbsp;•&nbsp;Auditable&nbsp;•&nbsp;Production-Ready
+              </p>
+            </div>
+
+            {/* Copyright */}
+            <p style={{ color: "#4B5563", fontFamily: "'Manrope', sans-serif", fontSize: "0.75rem", margin: 0, textAlign: "center" }}>
+              © 2026 Vrishabhanvi Venture. All rights reserved.
+            </p>
+
+            {/* Legal links */}
+            <div className="flex items-center gap-4 flex-wrap justify-center">
+              {[
+                { label: "Return Policy", to: "/returns" },
+                { label: "Contact", to: "/contact" },
+                { label: "About", to: "/about" },
+              ].map((l) => (
+                <Link
+                  key={l.label}
+                  to={l.to}
+                  style={{ color: "#4B5563", fontFamily: "'Manrope', sans-serif", fontSize: "0.75rem", textDecoration: "none" }}
+                  className="hover:text-gray-400"
+                >
+                  {l.label}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </div>

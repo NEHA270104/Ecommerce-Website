@@ -1,42 +1,47 @@
-import type { IncomingMessage, ServerResponse } from "http";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { getDb, checkMongoConnection } from "../lib/mongodb.ts";
+import { getDb, checkMongoConnection } from "../../lib/mongodb.ts";
 import {
   validateEmail,
   validatePassword,
   validateProductInput,
   validateCategoryInput,
-  validateOrderStatus,
   sanitizeMongoInput,
-  isValidObjectId,
-} from "./validators.ts";
+} from "../../server/validators.ts";
 import {
   checkRateLimit,
   recordFailedAttempt,
   resetRateLimit,
-} from "./rateLimiter.ts";
-import { products as seedProducts } from "../src/data/products.ts";
+} from "../../server/rateLimiter.ts";
+import { products as seedProducts } from "../../src/data/products.ts";
+
+interface NetlifyEvent {
+  path: string;
+  httpMethod: string;
+  headers: Record<string, string | undefined>;
+  multiValueHeaders?: Record<string, string[] | undefined>;
+  body: string | null;
+  isBase64Encoded: boolean;
+}
+
+interface NetlifyResponse {
+  statusCode: number;
+  headers: Record<string, string>;
+  multiValueHeaders?: Record<string, string[]>;
+  body: string;
+}
 
 const AUTH_COOKIE_NAME = "vv_admin_token";
 
-/**
- * Retrieves the JWT signing secret.
- * Rejects with an error if AUTH_SECRET is not configured in the environment.
- * Never falls back to a hardcoded secret.
- */
 function getAuthSecret(): string {
   const secret = process.env.AUTH_SECRET;
   if (!secret || secret.trim().length < 16) {
-    throw new Error("AUTH_SECRET environment variable is missing or insufficiently secure. Please set it in .env.local or Netlify environment.");
+    throw new Error("AUTH_SECRET environment variable is missing or insufficiently secure in Netlify environment.");
   }
   return secret.trim();
 }
 
-/**
- * Constant-time string comparison to defend against timing attacks.
- */
 function safeCompare(a: string, b: string): boolean {
   if (typeof a !== "string" || typeof b !== "string") return false;
   const hashA = crypto.createHash("sha256").update(a).digest();
@@ -79,63 +84,19 @@ function serializeCookie(
   return str;
 }
 
-function parseJsonBody<T = Record<string, unknown>>(req: IncomingMessage): Promise<T> {
-  return new Promise((resolve, reject) => {
-    let body = "";
-    req.on("data", (chunk) => {
-      body += chunk;
-      // 2MB payload limit
-      if (body.length > 2 * 1024 * 1024) {
-        req.destroy();
-        reject(new Error("Payload Too Large"));
-      }
-    });
-    req.on("end", () => {
-      if (!body.trim()) return resolve({} as T);
-      try {
-        const parsed = JSON.parse(body);
-        resolve(sanitizeMongoInput(parsed) as T);
-      } catch {
-        reject(new Error("Invalid JSON"));
-      }
-    });
-    req.on("error", reject);
-  });
-}
-
-function getClientIp(req: IncomingMessage): string {
-  const forwarded = req.headers["x-forwarded-for"];
-  if (typeof forwarded === "string") {
-    return forwarded.split(",")[0].trim();
-  }
-  if (Array.isArray(forwarded) && forwarded.length > 0) {
-    return forwarded[0].trim();
-  }
-  return req.socket?.remoteAddress || "127.0.0.1";
-}
-
 function isOriginAllowed(origin: string | undefined): boolean {
   if (!origin) return false;
-
   const cleanOrigin = origin.trim().replace(/\/+$/, "").toLowerCase();
 
-  // Production domain and subdomains
   if (
     cleanOrigin === "https://vrishabhanvi.com" ||
     cleanOrigin === "https://www.vrishabhanvi.com" ||
     cleanOrigin.endsWith(".vrishabhanvi.com") ||
-    cleanOrigin.endsWith(".netlify.app")
+    cleanOrigin.endsWith(".netlify.app") ||
+    cleanOrigin.endsWith(".pages.dev") ||
+    cleanOrigin.startsWith("http://localhost:") ||
+    cleanOrigin.startsWith("http://127.0.0.1:")
   ) {
-    return true;
-  }
-
-  // Allow Cloudflare Pages subdomains if applicable
-  if (cleanOrigin.endsWith(".pages.dev")) {
-    return true;
-  }
-
-  // Allow localhost during local development
-  if (cleanOrigin.startsWith("http://localhost:") || cleanOrigin.startsWith("http://127.0.0.1:")) {
     return true;
   }
 
@@ -145,15 +106,14 @@ function isOriginAllowed(origin: string | undefined): boolean {
       .split(",")
       .map((url) => url.trim().replace(/\/+$/, "").toLowerCase())
       .filter(Boolean);
-
     if (allowedList.includes(cleanOrigin)) return true;
   }
 
   return false;
 }
 
-function getCorsHeaders(req: IncomingMessage): Record<string, string> {
-  const origin = req.headers.origin;
+function getCorsHeaders(event: NetlifyEvent): Record<string, string> {
+  const origin = event.headers.origin || event.headers.Origin;
   const headers: Record<string, string> = {
     "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization, Cookie, X-Requested-With, Cache-Control, Pragma, Accept",
@@ -170,35 +130,39 @@ function getCorsHeaders(req: IncomingMessage): Record<string, string> {
   return headers;
 }
 
-function sendJson(
-  req: IncomingMessage,
-  res: ServerResponse,
+function jsonResponse(
+  event: NetlifyEvent,
   statusCode: number,
   data: unknown,
-  extraHeaders: Record<string, string> = {}
-) {
-  const corsHeaders = getCorsHeaders(req);
-  res.statusCode = statusCode;
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  cookies: string[] = []
+): NetlifyResponse {
+  const corsHeaders = getCorsHeaders(event);
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json; charset=utf-8",
+    ...corsHeaders,
+  };
 
-  for (const [key, value] of Object.entries(corsHeaders)) {
-    res.setHeader(key, value);
+  const multiValueHeaders: Record<string, string[]> = {};
+  if (cookies.length > 0) {
+    multiValueHeaders["Set-Cookie"] = cookies;
   }
-  for (const [key, value] of Object.entries(extraHeaders)) {
-    res.setHeader(key, value);
-  }
-  res.end(JSON.stringify(data));
+
+  return {
+    statusCode,
+    headers,
+    ...(cookies.length > 0 ? { multiValueHeaders } : {}),
+    body: JSON.stringify(data),
+  };
 }
 
-export interface DecodedUser {
+interface DecodedUser {
   id?: string;
   email: string;
   role: string;
 }
 
-export function getSessionUser(req: IncomingMessage): DecodedUser | null {
-  // 1. Primary: Check HttpOnly cookie
-  const cookieHeader = req.headers.cookie;
+function getSessionUser(event: NetlifyEvent): DecodedUser | null {
+  const cookieHeader = event.headers.cookie || event.headers.Cookie;
   if (cookieHeader) {
     const cookies = parseCookies(cookieHeader);
     const token = cookies[AUTH_COOKIE_NAME];
@@ -209,13 +173,12 @@ export function getSessionUser(req: IncomingMessage): DecodedUser | null {
           return decoded;
         }
       } catch {
-        // Invalid or expired cookie token
+        // Invalid or expired token
       }
     }
   }
 
-  // 2. Secondary fallback: Check Authorization Bearer header (for automated testing / CLI)
-  const authHeader = req.headers.authorization;
+  const authHeader = event.headers.authorization || event.headers.Authorization;
   if (authHeader && authHeader.startsWith("Bearer ")) {
     const bearerToken = authHeader.substring(7).trim();
     if (bearerToken) {
@@ -233,86 +196,80 @@ export function getSessionUser(req: IncomingMessage): DecodedUser | null {
   return null;
 }
 
-export async function handleApiRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  next: () => void
-): Promise<void> {
-  const url = req.url || "";
-  const pathname = url.split("?")[0];
-  const method = req.method || "GET";
+function getClientIp(event: NetlifyEvent): string {
+  const clientIp =
+    event.headers["client-ip"] ||
+    event.headers["x-forwarded-for"]?.split(",")[0].trim() ||
+    event.headers["x-nf-client-connection-ip"] ||
+    "127.0.0.1";
+  return clientIp;
+}
 
-  // Handle CORS preflight (OPTIONS)
-  if (method === "OPTIONS" && pathname.startsWith("/api/")) {
-    const corsHeaders = getCorsHeaders(req);
-    res.statusCode = 204;
-    for (const [key, value] of Object.entries(corsHeaders)) {
-      res.setHeader(key, value);
-    }
-    res.end();
-    return;
-  }
+export const handler = async (event: NetlifyEvent): Promise<NetlifyResponse> => {
+  const pathname = event.path.replace(/^\/\.netlify\/functions\/api/, "/api");
+  const method = (event.httpMethod || "GET").toUpperCase();
 
-  // Only handle /api/ routes
-  if (!pathname.startsWith("/api/")) {
-    return next();
+  // 0. Handle CORS preflight
+  if (method === "OPTIONS") {
+    return {
+      statusCode: 204,
+      headers: getCorsHeaders(event),
+      body: "",
+    };
   }
 
   try {
-    // ── 0. GET /api/health (General Backend Health) ──────────────────────
+    // ── 1. GET /api/health ───────────────────────────────────────────────
     if (pathname === "/api/health" && method === "GET") {
-      return sendJson(req, res, 200, {
+      return jsonResponse(event, 200, {
         status: "ok",
         timestamp: new Date().toISOString(),
         service: "vrishabhanvi-backend",
+        runtime: "netlify-functions",
       });
     }
 
-    // ── 1. GET /api/health/mongodb (Database Health) ──────────────────────
+    // ── 2. GET /api/health/mongodb ───────────────────────────────────────
     if (pathname === "/api/health/mongodb" && method === "GET") {
       const result = await checkMongoConnection();
       if (result.ok) {
-        return sendJson(req, res, 200, { connected: true });
+        return jsonResponse(event, 200, { connected: true });
       }
-      return sendJson(req, res, 503, {
+      return jsonResponse(event, 503, {
         connected: false,
         error: "MongoDB connection failed",
       });
     }
 
-    // ── 2. POST /api/auth/login ──────────────────────────────────────────
+    // ── 3. POST /api/auth/login ──────────────────────────────────────────
     if (pathname === "/api/auth/login" && method === "POST") {
-      const clientIp = getClientIp(req);
+      const clientIp = getClientIp(event);
 
       // Rate limit check
       const rateCheck = await checkRateLimit(clientIp);
       if (!rateCheck.allowed) {
-        return sendJson(
-          req,
-          res,
-          429,
-          {
-            error: `Too many failed login attempts. Please try again in ${rateCheck.retryAfterSeconds} seconds.`,
-          },
-          { "Retry-After": String(rateCheck.retryAfterSeconds) }
-        );
+        const res = jsonResponse(event, 429, {
+          error: `Too many failed login attempts. Please try again in ${rateCheck.retryAfterSeconds} seconds.`,
+        });
+        res.headers["Retry-After"] = String(rateCheck.retryAfterSeconds);
+        return res;
       }
 
-      let body: Record<string, unknown>;
+      let body: Record<string, unknown> = {};
       try {
-        body = await parseJsonBody<Record<string, unknown>>(req);
+        body = event.body ? sanitizeMongoInput(JSON.parse(event.body)) : {};
       } catch {
-        return sendJson(req, res, 400, { error: "Invalid JSON request body" });
+        return jsonResponse(event, 400, { error: "Invalid JSON request body" });
       }
 
       const emailValidation = validateEmail(body.email);
       const passwordValidation = validatePassword(body.password);
 
       if (!emailValidation.valid || !emailValidation.email) {
-        return sendJson(req, res, 400, { error: emailValidation.error || "Please enter a valid email address" });
+        return jsonResponse(event, 400, { error: emailValidation.error || "Please enter a valid email address" });
       }
       if (!passwordValidation.valid || !passwordValidation.password) {
-        return sendJson(req, res, 400, { error: passwordValidation.error || "Password is required" });
+        return jsonResponse(event, 400, { error: passwordValidation.error || "Password is required" });
       }
 
       const cleanEmail = emailValidation.email;
@@ -345,8 +302,7 @@ export async function handleApiRequest(
           }
         }
       } catch (dbErr) {
-        // Safe server-side log, no credentials leaked
-        console.warn("[Auth API] Database lookup warning:", dbErr instanceof Error ? dbErr.message : "DB unreachable");
+        console.warn("[Auth Netlify API] DB lookup warning:", dbErr instanceof Error ? dbErr.message : "DB unreachable");
       }
 
       // 2. Fallback to server-side environment variables with constant-time comparison
@@ -369,11 +325,10 @@ export async function handleApiRequest(
 
       if (!isAuthenticated) {
         await recordFailedAttempt(clientIp);
-        // Generic authentication error: never reveal which field was invalid
-        return sendJson(req, res, 401, { error: "Invalid email or password" });
+        return jsonResponse(event, 401, { error: "Invalid email or password" });
       }
 
-      // Successful login -> Reset rate limiting counter
+      // Successful login -> Reset rate limit
       await resetRateLimit(clientIp);
 
       // Generate JWT Token
@@ -387,7 +342,7 @@ export async function handleApiRequest(
         expiresIn: "7d",
       });
 
-      // Set HTTP-only Cookie (SameSite=Lax for same-domain Netlify / Cloudflare deployment)
+      // Set HTTP-only Cookie
       const isProduction = process.env.NODE_ENV === "production" || !!process.env.NETLIFY;
       const setCookie = serializeCookie(AUTH_COOKIE_NAME, token, {
         httpOnly: true,
@@ -397,10 +352,8 @@ export async function handleApiRequest(
         maxAge: 7 * 24 * 60 * 60, // 7 days
       });
 
-      // Response does not leak raw JWT in JSON body
-      return sendJson(
-        req,
-        res,
+      return jsonResponse(
+        event,
         200,
         {
           success: true,
@@ -410,11 +363,11 @@ export async function handleApiRequest(
             role: authenticatedRole,
           },
         },
-        { "Set-Cookie": setCookie }
+        [setCookie]
       );
     }
 
-    // ── 3. POST /api/auth/logout ─────────────────────────────────────────
+    // ── 4. POST /api/auth/logout ─────────────────────────────────────────
     if (pathname === "/api/auth/logout" && method === "POST") {
       const isProduction = process.env.NODE_ENV === "production" || !!process.env.NETLIFY;
       const clearCookie = serializeCookie(AUTH_COOKIE_NAME, "", {
@@ -425,23 +378,22 @@ export async function handleApiRequest(
         maxAge: 0,
       });
 
-      return sendJson(
-        req,
-        res,
+      return jsonResponse(
+        event,
         200,
         { success: true, message: "Logged out successfully" },
-        { "Set-Cookie": clearCookie }
+        [clearCookie]
       );
     }
 
-    // ── 4. GET /api/auth/me ──────────────────────────────────────────────
+    // ── 5. GET /api/auth/me ──────────────────────────────────────────────
     if (pathname === "/api/auth/me" && method === "GET") {
-      const user = getSessionUser(req);
+      const user = getSessionUser(event);
       if (!user) {
-        return sendJson(req, res, 401, { authenticated: false, error: "Unauthorized" });
+        return jsonResponse(event, 401, { authenticated: false, error: "Unauthorized" });
       }
 
-      return sendJson(req, res, 200, {
+      return jsonResponse(event, 200, {
         authenticated: true,
         user: {
           email: user.email,
@@ -450,21 +402,20 @@ export async function handleApiRequest(
       });
     }
 
-    // ── 5. Public /api/orders (Price Verification Endpoint) ──────────────
+    // ── 6. Public /api/orders (Price Verification Endpoint) ──────────────
     if (pathname === "/api/orders" && method === "POST") {
-      let body: Record<string, unknown>;
+      let body: Record<string, unknown> = {};
       try {
-        body = await parseJsonBody<Record<string, unknown>>(req);
+        body = event.body ? sanitizeMongoInput(JSON.parse(event.body)) : {};
       } catch {
-        return sendJson(req, res, 400, { error: "Invalid JSON request body" });
+        return jsonResponse(event, 400, { error: "Invalid JSON request body" });
       }
 
       const items = Array.isArray(body.items) ? body.items : [];
       if (items.length === 0) {
-        return sendJson(req, res, 400, { error: "Order must contain at least one item" });
+        return jsonResponse(event, 400, { error: "Order must contain at least one item" });
       }
 
-      // Server-side price calculation: Never trust client prices
       let verifiedSubtotal = 0;
       const verifiedItems = [];
 
@@ -474,14 +425,13 @@ export async function handleApiRequest(
         const productName = String(itemObj.name || "").trim();
         const quantity = Math.max(1, parseInt(String(itemObj.quantity || 1), 10) || 1);
 
-        // Find authoritative product in seed or DB
         const matchedProduct = seedProducts.find(
           (p) => p.name.toLowerCase() === productName.toLowerCase()
         );
 
         const authoritativePrice = matchedProduct ? matchedProduct.price : Number(itemObj.price) || 0;
         if (authoritativePrice <= 0) {
-          return sendJson(req, res, 400, { error: `Invalid product price for item: ${productName}` });
+          return jsonResponse(event, 400, { error: `Invalid product price for item: ${productName}` });
         }
 
         verifiedSubtotal += authoritativePrice * quantity;
@@ -497,7 +447,7 @@ export async function handleApiRequest(
       const shipping = verifiedSubtotal >= 999 ? 0 : 99;
       const verifiedTotal = verifiedSubtotal + shipping;
 
-      return sendJson(req, res, 200, {
+      return jsonResponse(event, 200, {
         success: true,
         verifiedSubtotal,
         shipping,
@@ -506,30 +456,36 @@ export async function handleApiRequest(
       });
     }
 
-    // ── 6. Protected /api/admin/* endpoints ──────────────────────────────
+    // ── 7. Protected /api/admin/* endpoints ──────────────────────────────
     if (pathname.startsWith("/api/admin")) {
-      const user = getSessionUser(req);
+      const user = getSessionUser(event);
       if (!user) {
-        return sendJson(req, res, 401, { error: "Unauthorized. Admin session required." });
+        return jsonResponse(event, 401, { error: "Unauthorized. Admin session required." });
       }
 
       if (user.role !== "admin") {
-        return sendJson(req, res, 403, { error: "Forbidden. Admin privileges required." });
+        return jsonResponse(event, 403, { error: "Forbidden. Admin privileges required." });
       }
 
       // MongoDB health check for admin
       if (pathname === "/api/admin/health" && method === "GET") {
         const health = await checkMongoConnection();
-        return sendJson(req, res, health.ok ? 200 : 503, health);
+        return jsonResponse(event, health.ok ? 200 : 503, health);
       }
 
       // Products endpoints
       if (pathname === "/api/admin/products") {
         if (method === "POST") {
-          const body = await parseJsonBody(req);
-          const validation = validateProductInput(body);
+          let rawBody: unknown = {};
+          try {
+            rawBody = event.body ? JSON.parse(event.body) : {};
+          } catch {
+            return jsonResponse(event, 400, { error: "Invalid JSON body" });
+          }
+
+          const validation = validateProductInput(rawBody);
           if (!validation.valid || !validation.data) {
-            return sendJson(req, res, 400, { error: validation.error || "Invalid product data" });
+            return jsonResponse(event, 400, { error: validation.error || "Invalid product data" });
           }
 
           try {
@@ -540,9 +496,9 @@ export async function handleApiRequest(
               createdAt: new Date(),
               updatedAt: new Date(),
             });
-            return sendJson(req, res, 201, { success: true, id: result.insertedId });
+            return jsonResponse(event, 201, { success: true, id: result.insertedId });
           } catch {
-            return sendJson(req, res, 503, { error: "Database unavailable" });
+            return jsonResponse(event, 503, { error: "Database unavailable" });
           }
         }
 
@@ -551,9 +507,9 @@ export async function handleApiRequest(
             const db = await getDb();
             const productsCol = db.collection("products");
             const products = await productsCol.find({}).toArray();
-            return sendJson(req, res, 200, { products });
+            return jsonResponse(event, 200, { products });
           } catch {
-            return sendJson(req, res, 200, { products: [], note: "MongoDB not connected" });
+            return jsonResponse(event, 200, { products: [], note: "MongoDB not connected" });
           }
         }
       }
@@ -561,10 +517,16 @@ export async function handleApiRequest(
       // Categories endpoints
       if (pathname === "/api/admin/categories") {
         if (method === "POST") {
-          const body = await parseJsonBody(req);
-          const validation = validateCategoryInput(body);
+          let rawBody: unknown = {};
+          try {
+            rawBody = event.body ? JSON.parse(event.body) : {};
+          } catch {
+            return jsonResponse(event, 400, { error: "Invalid JSON body" });
+          }
+
+          const validation = validateCategoryInput(rawBody);
           if (!validation.valid || !validation.data) {
-            return sendJson(req, res, 400, { error: validation.error || "Invalid category data" });
+            return jsonResponse(event, 400, { error: validation.error || "Invalid category data" });
           }
 
           try {
@@ -574,9 +536,9 @@ export async function handleApiRequest(
               ...validation.data,
               createdAt: new Date(),
             });
-            return sendJson(req, res, 201, { success: true, id: result.insertedId });
+            return jsonResponse(event, 201, { success: true, id: result.insertedId });
           } catch {
-            return sendJson(req, res, 503, { error: "Database unavailable" });
+            return jsonResponse(event, 503, { error: "Database unavailable" });
           }
         }
 
@@ -585,9 +547,9 @@ export async function handleApiRequest(
             const db = await getDb();
             const categoriesCol = db.collection("categories");
             const categories = await categoriesCol.find({}).toArray();
-            return sendJson(req, res, 200, { categories });
+            return jsonResponse(event, 200, { categories });
           } catch {
-            return sendJson(req, res, 200, { categories: [], note: "MongoDB not connected" });
+            return jsonResponse(event, 200, { categories: [], note: "MongoDB not connected" });
           }
         }
       }
@@ -600,10 +562,10 @@ export async function handleApiRequest(
 
           if (method === "GET") {
             const orders = await ordersCol.find({}).sort({ date: -1 }).toArray();
-            return sendJson(req, res, 200, { orders });
+            return jsonResponse(event, 200, { orders });
           }
         } catch {
-          return sendJson(req, res, 200, { orders: [], note: "MongoDB not connected" });
+          return jsonResponse(event, 200, { orders: [], note: "MongoDB not connected" });
         }
       }
 
@@ -615,24 +577,23 @@ export async function handleApiRequest(
 
           if (method === "GET") {
             const customers = await customersCol.find({}).toArray();
-            return sendJson(req, res, 200, { customers });
+            return jsonResponse(event, 200, { customers });
           }
         } catch {
-          return sendJson(req, res, 200, { customers: [], note: "MongoDB not connected" });
+          return jsonResponse(event, 200, { customers: [], note: "MongoDB not connected" });
         }
       }
 
       // Catch-all for unhandled /api/admin routes
-      return sendJson(req, res, 404, { error: "Admin endpoint not found" });
+      return jsonResponse(event, 404, { error: "Admin endpoint not found" });
     }
 
     // Catch-all for any other /api/* routes
-    return sendJson(req, res, 404, { error: "API endpoint not found" });
+    return jsonResponse(event, 404, { error: "API endpoint not found" });
   } catch (error) {
-    // Log server-side only; never leak error details or connection strings to the client
-    console.error("[API Middleware Error]:", error instanceof Error ? error.message : "Internal error");
-    return sendJson(req, res, 500, {
+    console.error("[Netlify API Error]:", error instanceof Error ? error.message : "Internal error");
+    return jsonResponse(event, 500, {
       error: "Something went wrong. Please try again.",
     });
   }
-}
+};

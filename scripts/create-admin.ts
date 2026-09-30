@@ -9,7 +9,7 @@ dotenv.config();
 
 const MONGODB_URI = process.env.MONGODB_URI;
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "VrishabhanviVentures@gmail.com";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "Vrishabhanvi@123";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 const DB_NAME = "vrishabhanvi_ventures";
 
 async function main() {
@@ -20,6 +20,12 @@ async function main() {
   if (!MONGODB_URI) {
     console.error("❌ Error: MONGODB_URI is not defined in .env.local");
     console.error("Please add your MongoDB Atlas connection string to .env.local");
+    process.exit(1);
+  }
+
+  if (!ADMIN_PASSWORD) {
+    console.error("❌ Error: ADMIN_PASSWORD is not defined in environment or .env.local");
+    console.error("Please set a secure ADMIN_PASSWORD before seeding the admin account.");
     process.exit(1);
   }
 
