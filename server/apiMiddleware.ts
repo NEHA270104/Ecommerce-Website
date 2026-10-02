@@ -1,6 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "http";
 import crypto from "crypto";
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { getDb, checkMongoConnection } from "../lib/mongodb.ts";
 import {
@@ -318,63 +317,33 @@ export async function handleApiRequest(
       const cleanEmail = emailValidation.email;
       const cleanPassword = passwordValidation.password;
 
-      let isAuthenticated = false;
-      let authenticatedEmail = cleanEmail;
-      let authenticatedRole = "admin";
-      let adminId = "admin-1";
+      // ── Authenticate using environment variables ONLY ──────────────────
+      // Admin login does NOT query MongoDB. Credentials come exclusively from
+      // the server-side environment variables ADMIN_EMAIL and ADMIN_PASSWORD.
+      // This ensures login works even when the database is temporarily unavailable.
+      const envEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+      const envPassword = process.env.ADMIN_PASSWORD?.trim();
 
-      // 1. Try checking MongoDB admins collection with timeout
-      try {
-        const db = await Promise.race([
-          getDb(),
-          new Promise<never>((_, reject) => setTimeout(() => reject(new Error("DB timeout")), 2000)),
-        ]);
-        const adminsCol = db.collection("admins");
-        const adminDoc = await Promise.race([
-          adminsCol.findOne({ email: cleanEmail }),
-          new Promise<null>((_, reject) => setTimeout(() => reject(new Error("DB timeout")), 2000)),
-        ]);
-
-        if (adminDoc && typeof adminDoc.passwordHash === "string") {
-          const isMatch = await bcrypt.compare(cleanPassword, adminDoc.passwordHash);
-          if (isMatch) {
-            isAuthenticated = true;
-            authenticatedEmail = String(adminDoc.email);
-            authenticatedRole = String(adminDoc.role || "admin");
-            adminId = String(adminDoc._id);
-          }
-        }
-      } catch (dbErr) {
-        // Safe server-side log, no credentials leaked
-        console.warn("[Auth API] Database lookup warning:", dbErr instanceof Error ? dbErr.message : "DB unreachable");
+      if (!envEmail || !envPassword) {
+        console.error("[Auth] ADMIN_EMAIL or ADMIN_PASSWORD is not configured in the environment.");
+        return sendJson(req, res, 503, { error: "Authentication service not configured. Contact the administrator." });
       }
 
-      // 2. Fallback to server-side environment variables with constant-time comparison
-      if (!isAuthenticated) {
-        const envEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-        const envPassword = process.env.ADMIN_PASSWORD;
+      // Constant-time comparison prevents timing-based credential enumeration attacks
+      const emailMatches = safeCompare(cleanEmail, envEmail);
+      const passwordMatches = safeCompare(cleanPassword, envPassword);
 
-        if (envEmail && envPassword) {
-          const emailMatches = safeCompare(cleanEmail, envEmail);
-          const passwordMatches = safeCompare(cleanPassword, envPassword);
-
-          if (emailMatches && passwordMatches) {
-            isAuthenticated = true;
-            authenticatedEmail = envEmail;
-            authenticatedRole = "admin";
-            adminId = "env-admin";
-          }
-        }
-      }
-
-      if (!isAuthenticated) {
+      if (!emailMatches || !passwordMatches) {
         await recordFailedAttempt(clientIp);
-        // Generic authentication error: never reveal which field was invalid
         return sendJson(req, res, 401, { error: "Invalid email or password" });
       }
 
-      // Successful login -> Reset rate limiting counter
+      // ── Successful authentication ──────────────────────────────────────
       await resetRateLimit(clientIp);
+
+      const authenticatedEmail = envEmail;
+      const authenticatedRole = "admin";
+      const adminId = "env-admin";
 
       // Generate JWT Token
       const tokenPayload = {

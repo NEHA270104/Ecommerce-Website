@@ -4,24 +4,48 @@
   functions = "netlify/functions"
 
 # 1. Route all /api/* requests to Netlify serverless functions
+#    Force = true ensures this redirect takes priority over cached responses
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
   status = 200
+  force = true
 
 # 2. SPA fallback: Route all frontend client routes to index.html
+#    Only applies to non-API paths (after the API redirect above)
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
-# Cache immutable static assets
+# ── API routes: Must never be cached by Cloudflare or any CDN ──────────────
+# Cloudflare respects Cache-Control: no-store and will set CF-Cache-Status: BYPASS
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+    Pragma = "no-cache"
+    Surrogate-Control = "no-store"
+    CDN-Cache-Control = "no-store"
+    Cloudflare-CDN-Cache-Control = "no-store"
+
+# Netlify function direct path: also must bypass Cloudflare cache
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+    Pragma = "no-cache"
+    Surrogate-Control = "no-store"
+    CDN-Cache-Control = "no-store"
+    Cloudflare-CDN-Cache-Control = "no-store"
+
+# Cache immutable static assets (only JS/CSS/images — NOT HTML or API)
 [[headers]]
   for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Production Security Headers
+# Production Security Headers (applied to all routes)
 [[headers]]
   for = "/*"
   [headers.values]
@@ -30,4 +54,4 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://images.unsplash.com https://*.googleusercontent.com; connect-src 'self' https:; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self';"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://images.unsplash.com https://*.googleusercontent.com; connect-src 'self' https:; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self';"
