@@ -7,7 +7,7 @@
 #    Force = true ensures this redirect takes priority over cached responses
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/api/:splat"
+  to = "/.netlify/functions/api"
   status = 200
   force = true
 
