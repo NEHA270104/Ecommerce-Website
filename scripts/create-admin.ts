@@ -8,7 +8,7 @@ dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 dotenv.config();
 
 const MONGODB_URI = process.env.MONGODB_URI;
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "VrishabhanviVentures@gmail.com";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 const DB_NAME = "vrishabhanvi_ventures";
 
@@ -20,6 +20,11 @@ async function main() {
   if (!MONGODB_URI) {
     console.error("❌ Error: MONGODB_URI is not defined in .env.local");
     console.error("Please add your MongoDB Atlas connection string to .env.local");
+    process.exit(1);
+  }
+
+  if (!ADMIN_EMAIL) {
+    console.error("❌ Error: ADMIN_EMAIL is not defined in environment or .env.local");
     process.exit(1);
   }
 
@@ -38,57 +43,77 @@ async function main() {
       serverSelectionTimeoutMS: 8000,
     });
     await client.connect();
-    console.log(" Connected to MongoDB Atlas successfully.");
+    console.log("✅ Connected to MongoDB Atlas successfully.");
 
     const db = client.db(DB_NAME);
     const adminsCol = db.collection("admins");
 
-    // Ensure index on email
+    // Ensure unique index on email
     await adminsCol.createIndex({ email: 1 }, { unique: true });
 
-    // Normalize email for case-insensitive lookup
     const normalizedEmail = ADMIN_EMAIL.trim().toLowerCase();
 
-    // Check if admin already exists
-    const existingAdmin = await adminsCol.findOne({
-      email: { $regex: new RegExp(`^${normalizedEmail}$`, "i") },
-    });
+    // Hash the password with bcrypt (10 salt rounds)
+    const saltRounds = 10;
+    const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, saltRounds);
 
-    if (existingAdmin) {
-      console.log(`ℹ️ Admin user with email "${existingAdmin.email}" already exists. (ID: ${existingAdmin._id})`);
-      console.log("No duplicate admin created.");
-    } else {
-      console.log(`Creating initial admin account for: ${ADMIN_EMAIL}...`);
+    // Check how many admin documents exist
+    const existingCount = await adminsCol.countDocuments();
 
-      // Hash password using bcryptjs
-      const saltRounds = 10;
-      const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, saltRounds);
-
+    if (existingCount === 0) {
+      // No admin exists — create fresh
+      console.log(`Creating initial admin account for: ${normalizedEmail} ...`);
       const adminDoc = {
-        email: ADMIN_EMAIL.trim(),
+        email: normalizedEmail,
         passwordHash,
         role: "admin",
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-
       const result = await adminsCol.insertOne(adminDoc);
-      console.log(` Admin user created successfully with ID: ${result.insertedId}`);
-      console.log("Password has been securely hashed with bcrypt.");
-    }
-
-    // Ensure collections exist with indexes
-    const collections = await db.listCollections().toArray();
-    const colNames = collections.map((c) => c.name);
-
-    for (const col of ["products", "categories", "orders", "customers"]) {
-      if (!colNames.includes(col)) {
-        await db.createCollection(col);
-        console.log(` Created collection: ${col}`);
+      console.log(`✅ Admin user created with ID: ${result.insertedId}`);
+    } else {
+      // Admin(s) exist — upsert: update first admin record with new email + password
+      console.log(`ℹ️  Existing admin record(s) found (${existingCount}). Updating credentials...`);
+      const existing = await adminsCol.findOne({});
+      const updateResult = await adminsCol.updateOne(
+        { _id: existing!._id },
+        {
+          $set: {
+            email: normalizedEmail,
+            passwordHash,
+            role: "admin",
+            updatedAt: new Date(),
+          },
+        }
+      );
+      if (updateResult.modifiedCount > 0) {
+        console.log(`✅ Admin credentials updated successfully (ID: ${existing!._id})`);
+      } else {
+        console.log("ℹ️  No changes were made (credentials may already match).");
+      }
+      // Remove any duplicate admin accounts beyond the first one
+      if (existingCount > 1) {
+        const allAdmins = await adminsCol.find({}).toArray();
+        const idsToRemove = allAdmins.slice(1).map((a) => a._id);
+        await adminsCol.deleteMany({ _id: { $in: idsToRemove } });
+        console.log(`🧹 Removed ${idsToRemove.length} duplicate admin account(s).`);
       }
     }
 
-    console.log("\n Database initialization complete!");
+    console.log("✅ Password hashed securely with bcrypt (10 rounds).");
+
+    // Ensure base collections exist
+    const collections = await db.listCollections().toArray();
+    const colNames = collections.map((c) => c.name);
+    for (const col of ["products", "categories", "orders", "customers"]) {
+      if (!colNames.includes(col)) {
+        await db.createCollection(col);
+        console.log(`✅ Created collection: ${col}`);
+      }
+    }
+
+    console.log("\n✅ Database initialization complete!");
     console.log("==========================================");
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
