@@ -148,14 +148,14 @@ export default function Footer() {
                 </div>
               </a>
               <a
-                href="mailto:vrishabhanviVentures@gmail.com"
+                href="mailto:support.vrishabhanvi@gmail.com"
                 style={{ color: "#D1D5DB", fontFamily: "'Manrope', sans-serif", fontSize: "0.83rem", textDecoration: "none", display: "flex", alignItems: "flex-start", gap: "10px" }}
                 className="hover:text-white"
               >
                 <FontAwesomeIcon icon={faEnvelope} style={{ color: "#C99724", marginTop: "3px", flexShrink: 0 }} />
                 <div>
                   <p style={{ color: "#9CA3AF", fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "2px" }}>Email</p>
-                  <span style={{ wordBreak: "break-all" }}>vrishabhanviVentures@gmail.com</span>
+                  <span style={{ wordBreak: "break-all" }}>support.vrishabhanvi@gmail.com</span>
                 </div>
               </a>
               <div style={{ color: "#D1D5DB", fontFamily: "'Manrope', sans-serif", fontSize: "0.83rem", display: "flex", alignItems: "flex-start", gap: "10px" }}>
